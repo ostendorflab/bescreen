@@ -1,0 +1,1171 @@
+import os
+import sys
+import polars as pl
+import numpy as np
+import pyfaidx
+import pysam
+import get_vep
+import shared
+import dbsnp_sqlite3
+import protein_variant
+import blast_guides
+
+
+def design_bes(annotation_file,
+               refgenome,
+               input_variant,
+               input_file,
+               pamsite,
+               edit_window_start,
+               edit_window_end,
+               guidelength,
+               ignorestring,
+               baseeditor,
+               edit_window_start_plus,
+               edit_window_end_plus,
+               allpossible,
+               input_format,
+               write_parquet,
+               vep,
+               aspect,
+               vep_flags,
+               vep_species,
+               vep_assembly,
+               vep_dir_cache,
+               vep_dir_plugins,
+               vep_cache_version,
+               dbsnp_db,
+               blast,
+               no_contigs,
+               filter_synonymous,
+               filter_splice_site,
+               filter_specific,
+               filter_missense):
+
+    edits = {
+        'A': 'G',
+        'T': 'C',
+        'C': 'T',
+        'G': 'A'
+    }
+
+    if baseeditor == "both":
+        abe = True
+        cbe = True
+    elif baseeditor == "ABE":
+        abe = True
+        cbe = False
+    elif baseeditor == "CBE":
+        abe = False
+        cbe = True
+
+    ref_genome_pyfaidx = pyfaidx.Fasta(refgenome)
+
+    parquet_file = shared.check_parquet(annotation_file, write_parquet)
+
+    cdss = pl.read_parquet(parquet_file)
+
+    if input_file:
+
+        input_df = pl.read_csv(input_file, separator=',')
+        input_columns = input_df.columns
+
+        if not input_format:
+
+            if all(cols in input_columns for cols in ['variant', 'chr', 'pos', 'alt']):
+                raise ValueError('Input file contains columns "variant", "chr", "pos" and "alt"!\nPlease use either "variant" or "chr", "pos"(, "ref") and "alt" or manually define --input-format!')
+
+            elif 'variant' in input_columns:
+                detected_mode = 'variant'
+
+            elif all(cols in input_columns for cols in ['chr', 'pos', 'alt']):
+                detected_mode = 'vcf'
+
+            else:
+                raise ValueError('Input file does not contain the column "variant" or the columns "chr", "pos"(, "ref") and "alt"!\nPlease provide either "variant" or "chr", "pos"(, "ref") and "alt"!')
+
+            input_format = detected_mode
+
+        if input_format == "variant":
+            if 'variant' in input_columns:
+                variant_list = input_df["variant"].to_list()
+            else:
+                raise ValueError('Input file does not contain the column "variant"!\nPlease provide it if selecting --input-format variant!')
+
+        elif input_format == "vcf":
+            if all(cols in input_columns for cols in ['chr', 'pos', 'alt']):
+                if "ref" in input_columns:
+                    variant_list = input_df.with_columns(variant = pl.concat_str([pl.col("chr"), pl.col("pos"), pl.col("ref"), pl.col("alt")], separator='_'))['variant'].to_list()
+                else:
+                    variant_list = input_df.with_columns(variant = pl.concat_str([pl.col("chr"), pl.col("pos"), pl.col("alt")], separator='_'))['variant'].to_list()
+            else:
+                raise ValueError('Input file does not contain the columns "chr", "pos"(, "ref") and "alt"!\nPlease provide them if selecting --input-format vcf!')
+
+    elif input_variant:
+        variant_list = input_variant.replace(' ', '').split(",")
+
+    # final lists to fill after looping
+    all_variant = []
+    all_variant_real = []
+    all_editable = []
+    all_be_strings = []
+    all_original_alt = []
+    all_target_seq_ref = []
+    all_target_seq_ref_match = []
+    all_target_seq = []
+    all_target_base_ref = []
+    all_target_base = []
+    all_possible_guides_with_pam = []
+    all_edit_strings = []
+    all_edit_pos_strings = []
+    all_possible_guides = []
+    all_possible_pams = []
+    all_rev_com = []
+    all_guide_starts = []
+    all_guide_ends = []
+    all_chroms = []
+
+    # final lists for shared.analyze_guide()
+    all_edit_window = []
+    all_num_edits = []
+    all_specific = []
+    all_edit_window_plus = []
+    all_num_edits_plus = []
+    all_specific_plus = []
+    all_safety_region = []
+    all_num_edits_safety = []
+    all_additional_in_safety = []
+    all_specificity = []
+    all_distance_median_variant = []
+    all_quality_scores_variant = []
+    all_distance_median_all = []
+    all_quality_scores_all = []
+
+    # final lists for manual annotation
+    all_gene_symbols = []
+    all_transcript_symbols = []
+    all_exon_numbers = []
+    all_first_transcript_exons = []
+    all_last_transcript_exons = []
+    all_codonss = []
+    all_codonss_edited = []
+    all_aass = []
+    all_aass_edited = []
+    all_splice_sites_included = []
+    all_synonymouss = []
+
+    # rsIDs to transform
+    rsids = []
+
+    # identify rsIDs in variants
+    for variant in variant_list:
+        if len(variant.split("_")) == 1 and variant.startswith('rs'): # rsID
+            rsids.append(variant)
+
+    for rsid in rsids:
+        # if rsid in variant_list: # this is not really necessary
+        #     variant_list.remove(rsid)
+        variant_list.remove(rsid) # remove rsIDs from variant_list
+
+    if rsids:
+        rsidvars = dbsnp_sqlite3.transform_locations(dbsnp_sqlite3.query_rsids(rsids,
+                                                                               dbsnp_db))
+        rsids_df = pl.DataFrame({'rsid': rsids})
+        rsidvars = rsidvars.join(rsids_df, on='rsid', how='right')
+        rsidvars = rsidvars.with_columns(pl.col("variant").fill_null('non_existent_input_rsID'))
+        rsidvars = rsidvars.with_columns(rsid_variant = pl.concat_str([pl.col('rsid'), pl.col('variant')], separator=':'))['rsid_variant'].to_list() # better in the function?
+
+        variant_list += rsidvars # readd the transformed rsIDs
+
+    # transcript mutations to transform
+    tmuts = []
+
+    # identify transcript mutations in variants
+    for variant in variant_list:
+        if len(variant.split("_")) == 1 and len(variant.split("-")) in [2, 3]: # tmuts
+            tmuts.append(variant)
+
+    for tmut in tmuts:
+        # if tmut in variant_list: # this is not really necessary
+        #     variant_list.remove(tmut)
+        variant_list.remove(tmut) # remove transcript mutations from variant_list
+
+    if tmuts:
+        tmutvars = []
+        for tmut in tmuts:
+            tr_mut_tmutvar = tmut.split("-")
+            tr_tmutvar = '-'.join(tr_mut_tmutvar[0:-1])
+            mut_tmutvar = tr_mut_tmutvar[-1]
+
+            tmutvar = protein_variant.get_variant_from_protein(tr_tmutvar,
+                                                               mut_tmutvar,
+                                                               cdss,
+                                                               ref_genome_pyfaidx,
+                                                               True)
+
+            for tmutsnp in tmutvar:
+                tmutvars.append(f'{tmut}:{tmutsnp}')
+
+        variant_list += tmutvars # readd the transformed transcript mutations
+
+    # precalculation of quality scores for positions in editing window
+    distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+
+    for variant in variant_list:
+        variant_coords = variant.split("_")
+        if len(variant_coords) == 4 and variant_coords[0].startswith('rs'):
+            rsidchrom, position, ref, alt = variant_coords
+            rsid, chrom = rsidchrom.split(":")
+        elif len(variant_coords) == 4 and len(variant_coords[0].split("-")) in [2, 3]:
+            tmutchrom, position, ref, alt = variant_coords
+            tmut, chrom = tmutchrom.split(":")
+        elif len(variant_coords) == 4: # REF given
+            chrom, position, ref, alt = variant_coords
+            alt = alt.upper()
+            ref = ref.upper()
+        elif len(variant_coords) == 3: # no REF given
+            chrom, position, alt = variant_coords
+            alt = alt.upper()
+            ref = ""
+        else:
+            variant += ':variant_is_improperly_formatted'
+            chrom, position, ref, alt = 'variant_is_improperly_formatted'.split("_")
+        if ignorestring:
+            chrom = chrom.replace(ignorestring, "")
+
+        if not (variant.endswith('no_input_gene_given') or
+                variant.endswith('no_input_transcript_given') or
+                variant.endswith('no_input_mutation_given') or
+                variant.endswith('input_transcript_not_found') or
+                variant.endswith('input_gene_not_found') or
+                variant.endswith('reference_not_amino_acid') or
+                variant.endswith('mutation_not_amino_acid') or
+                variant.endswith('input_position_not_numeric') or
+                variant.endswith('wrong_reference_amino_acid') or
+                variant.endswith('non_existent_input_rsID') or
+                variant.endswith('variant_is_improperly_formatted')):
+            if position.isnumeric():
+                position = int(position) - 1 # position based on VCF POS, which is 1-based
+            else:
+                variant += ':genomic_position_not_numeric'
+                chrom, position, ref, alt = 'genomic_position_not_numeric'.split("_")
+
+        length = guidelength # unnecessary
+
+        position_edit_window_start = edit_window_start # unnecessary
+        position_edit_window_end = edit_window_end # unnecessary
+
+        pam = pamsite # unnecessary
+        pam_length = len(pam) # 2 or 3
+
+        total_length = length + pam_length
+        length_edit_window = position_edit_window_end - (position_edit_window_start - 1)
+
+        bases_before_ew = position_edit_window_start - 1
+        bases_after_ew = length - position_edit_window_end
+        bases_after_ew_with_pam = total_length - position_edit_window_end
+
+        bases_before_variant = bases_before_ew + length_edit_window - 1 # - 1 since variant always need to stay in the edit window
+        bases_after_variant_with_pam = bases_after_ew_with_pam + length_edit_window - 1 # - 1 since variant always need to stay in the edit window
+
+        if variant.endswith('variant_is_improperly_formatted'):
+            target_base_ref = 'variant_is_improperly_formatted'
+        elif variant.endswith('no_input_gene_given'):
+            target_base_ref = 'no_input_gene_given'
+        elif variant.endswith('no_input_transcript_given'):
+            target_base_ref = 'no_input_transcript_given'
+        elif variant.endswith('no_input_mutation_given'):
+            target_base_ref = 'no_input_mutation_given'
+        elif variant.endswith('input_transcript_not_found'):
+            target_base_ref = 'input_transcript_not_found'
+        elif variant.endswith('input_gene_not_found'):
+            target_base_ref = 'input_gene_not_found'
+        elif variant.endswith('reference_not_amino_acid'):
+            target_base_ref = 'reference_not_amino_acid'
+        elif variant.endswith('mutation_not_amino_acid'):
+            target_base_ref = 'mutation_not_amino_acid'
+        elif variant.endswith('input_position_not_numeric'):
+            target_base_ref = 'input_position_not_numeric'
+        elif variant.endswith('wrong_reference_amino_acid'):
+            target_base_ref = 'wrong_reference_amino_acid'
+        elif variant.endswith('non_existent_input_rsID'):
+            target_base_ref = 'non_existent_input_rsID'
+        elif variant.endswith('genomic_position_not_numeric'):
+            target_base_ref = 'genomic_position_not_numeric'
+        else:
+            try:
+                target_base_ref = str(ref_genome_pyfaidx[chrom][position])
+            except:
+                variant += ':genomic_coordinates_not_found'
+                chrom, position, ref, alt = 'genomic_coordinates_not_found'.split("_")
+                target_base_ref = 'genomic_coordinates_not_found'
+
+        if ref:
+            if ref == target_base_ref:
+                target_seq_ref_match = "ref_match"
+            else:
+                target_seq_ref_match = "REF_MISMATCH"
+        else:
+            target_seq_ref_match = "no_ref_input"
+
+        if (abe and target_base_ref == "A" and alt == "G") or \
+           (abe and target_base_ref == "A" and allpossible) or \
+           (cbe and target_base_ref == "C" and alt == "T") or \
+           (cbe and target_base_ref == "C" and allpossible):
+            editable = True
+            rev_com = False
+            if target_base_ref == "A":
+                be_string = "ABE"
+                if alt == "G":
+                    original_alt = True
+                else:
+                    original_alt = False
+            elif target_base_ref == "C":
+                be_string = "CBE"
+                if alt == "T":
+                    original_alt = True
+                else:
+                    original_alt = False
+            target_base = target_base_ref
+
+            target_seq_ref_start = position - bases_before_variant
+            target_seq_ref_end = position + bases_after_variant_with_pam + 1
+            target_seq_ref = str(ref_genome_pyfaidx[chrom][target_seq_ref_start:target_seq_ref_end]) # + 1 since last position is excluded
+            target_seq = target_seq_ref
+
+        elif (abe and target_base_ref == "T" and alt == "C") or \
+             (abe and target_base_ref == "T" and allpossible) or \
+             (cbe and target_base_ref == "G" and alt == "A") or \
+             (cbe and target_base_ref == "G" and allpossible):
+            editable = True
+            rev_com = True
+            if target_base_ref == "T":
+                be_string = "ABE"
+                if alt == "C":
+                    original_alt = True
+                else:
+                    original_alt = False
+            elif target_base_ref == "G":
+                be_string = "CBE"
+                if alt == "A":
+                    original_alt = True
+                else:
+                    original_alt = False
+            target_base = shared.revcom(target_base_ref)
+
+            target_seq_ref_end = position - bases_after_variant_with_pam
+            target_seq_ref_start = position + bases_before_variant + 1
+            target_seq_ref = str(ref_genome_pyfaidx[chrom][target_seq_ref_end:target_seq_ref_start]) # + 1 since last position is excluded
+            target_seq = shared.revcom(target_seq_ref)
+
+        else:
+            editable = False
+
+        alt_edited = 'no_be_available' if target_base_ref in ['variant_is_improperly_formatted',
+                                                              'no_input_gene_given',
+                                                              'no_input_transcript_given',
+                                                              'no_input_mutation_given',
+                                                              'input_transcript_not_found',
+                                                              'input_gene_not_found',
+                                                              'reference_not_amino_acid',
+                                                              'mutation_not_amino_acid',
+                                                              'input_position_not_numeric',
+                                                              'wrong_reference_amino_acid',
+                                                              'non_existent_input_rsID',
+                                                              'genomic_position_not_numeric',
+                                                              'genomic_coordinates_not_found'] else edits[target_base_ref] if allpossible else alt
+        variant_real = variant
+        rsidtmutvariant = variant_real.split(":")
+        if (variant.endswith('no_input_gene_given') or
+            variant.endswith('no_input_transcript_given') or
+            variant.endswith('no_input_mutation_given') or
+            variant.endswith('input_transcript_not_found') or
+            variant.endswith('input_gene_not_found') or
+            variant.endswith('reference_not_amino_acid') or
+            variant.endswith('mutation_not_amino_acid') or
+            variant.endswith('input_position_not_numeric') or
+            variant.endswith('wrong_reference_amino_acid') or
+            variant.endswith('non_existent_input_rsID') or
+            variant.endswith('genomic_position_not_numeric') or
+            variant.endswith('genomic_coordinates_not_found') or
+            variant.endswith('variant_is_improperly_formatted')):
+            variant_real = rsidtmutvariant[1]
+        elif len(rsidtmutvariant) == 2 and (variant_real.startswith('rs') or len(rsidtmutvariant[0].split("-")) in [2, 3]):
+            variant_real = rsidtmutvariant[1]
+        if allpossible and target_base_ref not in ['variant_is_improperly_formatted',
+                                                   'no_input_gene_given',
+                                                   'no_input_transcript_given',
+                                                   'no_input_mutation_given',
+                                                   'input_transcript_not_found',
+                                                   'input_gene_not_found',
+                                                   'reference_not_amino_acid',
+                                                   'mutation_not_amino_acid',
+                                                   'input_position_not_numeric',
+                                                   'wrong_reference_amino_acid',
+                                                   'non_existent_input_rsID',
+                                                   'genomic_position_not_numeric',
+                                                   'genomic_coordinates_not_found']:
+            variant_real = variant_real.split('_')
+            variant_real[-1] = edits[target_base_ref]
+            variant_real = '_'.join(variant_real)
+
+
+        if editable:
+
+            # lists per variant
+            possible_guides_with_pam = []
+            possible_guides = []
+            possible_pams = []
+            edit_strings = []
+            edit_pos_strings = []
+            possible_starts = []
+            possible_ends = []
+            possible_chroms = []
+
+            # lists per variant for shared.analyze_guide()
+            edit_windows = []
+            num_editss = []
+            specifics = []
+            edit_window_pluss = []
+            num_edits_pluss = []
+            specific_pluss = []
+            safety_regions = []
+            num_edits_safetys = []
+            additional_in_safetys = []
+            specificitys = []
+            distance_median_variants = []
+            quality_scores_variants = []
+            distance_median_alls = []
+            quality_scores_alls = []
+
+            # lists per variant for manual annotation
+            gene_symbolss = []
+            transcript_symbolss = []
+            exon_numberss = []
+            first_transcript_exonss = []
+            last_transcript_exonss = []
+            codonsss = []
+            codonsss_edited = []
+            aasss = []
+            aasss_edited = []
+            splice_sitess_included = []
+            synonymousss = []
+
+            count_of_N_in_pam = pam.count("N")
+            count_of_G_in_pam = pam_length - count_of_N_in_pam
+
+            start_of_pam_search = bases_after_variant_with_pam - bases_after_ew - count_of_N_in_pam # the N of NGG/NG is irrelevant for the search here
+            end_of_pam_search = count_of_G_in_pam - 1 # the N of NGG/NG is irrelevant for the search here; stop at beginning of last pam
+            length_of_pam_search = count_of_G_in_pam # the N of NGG/NG is irrelevant for the search here
+
+            start_before_hit = length + count_of_N_in_pam
+            end_after_hit_with_pam = count_of_G_in_pam
+            end_after_hit_guide_only = count_of_N_in_pam
+
+            variant_position = bases_before_variant
+
+            for i in range(len(target_seq) - start_of_pam_search,
+                        len(target_seq) - end_of_pam_search):
+                if target_seq[i:i + length_of_pam_search] == pam.replace("N", ""):
+                    possible_guide_with_pam = target_seq[i - start_before_hit:i + end_after_hit_with_pam]
+                    possible_guide = target_seq[i - start_before_hit:i - end_after_hit_guide_only]
+                    possible_pam = target_seq[i - count_of_N_in_pam:i + count_of_G_in_pam]
+
+                    # shared.analyze_guide() per guide
+                    edit_window, \
+                    num_edits, \
+                    specific, \
+                    edit_window_plus, \
+                    num_edits_plus, \
+                    specific_plus, \
+                    safety_region, \
+                    num_edits_safety, \
+                    additional_in_safety, \
+                    edit_string, \
+                    edit_pos_string, \
+                    specificity, \
+                    distance_median_variant, \
+                    quality_scores_variant, \
+                    distance_median_all, \
+                    quality_scores_all = shared.analyze_guide(possible_guide,
+                                                              position_edit_window_start,
+                                                              position_edit_window_end,
+                                                              edit_window_start_plus,
+                                                              edit_window_end_plus,
+                                                              target_base,
+                                                              variant_position,
+                                                              distance_median_dict,
+                                                              quality_scores_dict)
+
+                    edit_string_an = edit_string
+                    if rev_com:
+                        edit_string_an = edit_string_an[::-1]
+
+                    edit_list = []
+                    variant_pos_rel = None
+                    for i in range(len(edit_string_an)):
+                        if edit_string_an[i] == '*':
+                            edit_list.append(i)
+                        elif edit_string_an[i] == 'V':
+                            edit_list.append(i)
+                            variant_pos_rel = i
+
+                    total_poss = [position - (variant_pos_rel - m) for m in edit_list]
+
+                    cdss_filtered = cdss.filter((pl.col('Chromosome') == chrom) &
+                                                (pl.col('Start') - 2 <= position) &
+                                                (position < pl.col('End') + 2)) # find CDSs with splice sites at the position of the variant
+
+                    if not cdss_filtered.is_empty():
+
+                        # lists per guide for manual annotation
+                        gene_symbols = []
+                        transcript_symbols = []
+                        exon_numbers = []
+                        first_transcript_exons = []
+                        last_transcript_exons = []
+                        codonss = []
+                        codonss_edited = []
+                        aass = []
+                        aass_edited = []
+                        splice_sites_included = []
+                        synonymouss = []
+
+                        for row in cdss_filtered.iter_rows(named=True): # could be a lot since overlapping exons (multiple transcripts (common), overlapping CDS of different genes (rare),...)
+
+                            # fixed annotations per overlapping exons for manual annotation
+                            gene_symbol = row['gene_name']
+                            transcript_symbol = row['transcript_name']
+                            exon_number = row['exon_number']
+                            first_transcript_exon = row['first_transcript_exon']
+                            last_transcript_exon = row['last_transcript_exon']
+
+                            # lists for codons and aas per overlapping exons per guide/editing window
+                            codons = []
+                            codons_edited = []
+                            aas = []
+                            aas_edited = []
+                            includes_splice_site = False
+                            synonymous = False
+
+                            for edit in total_poss:
+
+                                if str(row['Strand']) == '+':
+                                    index_edit_cds = edit - row['Start']
+                                elif str(row['Strand']) == '-':
+                                    index_edit_cds = row['End'] - 1 - edit
+
+                                if row["Start"] <= edit < row["End"]: # edit is in cds
+
+                                    offset = shared.get_offset(str(row['Strand']), int(row['Frame']), index_edit_cds)
+
+                                    if (row["Start"] <= (edit - offset) < row["End"]) and (row["Start"] <= (edit + 3 - offset) < row["End"]): # whole codon in cds
+                                        codon = str(ref_genome_pyfaidx[row["Chromosome"]][edit - offset:edit + 3 - offset])
+                                        codon_edited = shared.replace_str_index(codon, offset, alt_edited)
+
+                                        if str(row['Strand']) == '-':
+                                            codon = shared.revcom(codon)
+                                            codon_edited = shared.revcom(codon_edited)
+
+                                        aa = shared.codon_sun_one_letter[codon]
+                                        aa_edited = shared.codon_sun_one_letter[codon_edited]
+
+                                        if aa == shared.codon_sun_one_letter["ATG"] and exon_number == first_transcript_exon: # startcodon
+                                            if (row['Strand'] == '+' and (row["Start"] <= edit < (row["Start"] + 3))) or (row['Strand'] == '-' and ((row["End"] - 3) <= edit < row["End"])):
+                                                codon = "Start" + codon
+                                                aa = "Start" + aa
+
+                                    else:
+                                        codon = "incomplete_codon"
+                                        codon_edited = "incomplete_codon"
+                                        aa = "codon_incomplete"
+                                        aa_edited = "codon_incomplete"
+
+                                    if len(total_poss) == 1:
+                                        if aa == aa_edited:
+                                            synonymous = True
+                                        else:
+                                            synonymous = False
+
+                                elif (row["Start"] - 2) <= edit < (row["End"] + 2):
+                                    includes_splice_site = True
+                                    synonymous = False
+
+                                    if (row["Start"] - 2) <= edit < row["Start"]:
+                                        if row["Strand"] == '+':
+                                            codon = "5prime_splice_site"
+                                            codon_edited = "5prime_splice_site"
+                                            aa = "5prime_splice_site"
+                                            aa_edited = "5prime_splice_site"
+                                            if exon_number == first_transcript_exon:
+                                                codon = "5prime_UTR"
+                                                codon_edited = "5prime_UTR"
+                                                aa = "5prime_UTR"
+                                                aa_edited = "5prime_UTR"
+                                                includes_splice_site = False
+                                        elif row["Strand"] == '-':
+                                            codon = "3prime_splice_site"
+                                            codon_edited = "3prime_splice_site"
+                                            aa = "3prime_splice_site"
+                                            aa_edited = "3prime_splice_site"
+                                            if exon_number == last_transcript_exon:
+                                                codon = "3prime_UTR"
+                                                codon_edited = "3prime_UTR"
+                                                aa = "3prime_UTR"
+                                                aa_edited = "3prime_UTR"
+                                                includes_splice_site = False
+                                    elif row["End"] <= edit < (row["End"] + 2):
+                                        if row["Strand"] == '-':
+                                            codon = "5prime_splice_site"
+                                            codon_edited = "5prime_splice_site"
+                                            aa = "5prime_splice_site"
+                                            aa_edited = "5prime_splice_site"
+                                            if exon_number == first_transcript_exon:
+                                                codon = "5prime_UTR"
+                                                codon_edited = "5prime_UTR"
+                                                aa = "5prime_UTR"
+                                                aa_edited = "5prime_UTR"
+                                                includes_splice_site = False
+                                        elif row["Strand"] == '+':
+                                            codon = "3prime_splice_site"
+                                            codon_edited = "3prime_splice_site"
+                                            aa = "3prime_splice_site"
+                                            aa_edited = "3prime_splice_site"
+                                            if exon_number == last_transcript_exon:
+                                                codon = "3prime_UTR"
+                                                codon_edited = "3prime_UTR"
+                                                aa = "3prime_UTR"
+                                                aa_edited = "3prime_UTR"
+                                                includes_splice_site = False
+
+                                else:
+                                    codon = "not_in_CDS"
+                                    codon_edited = "not_in_CDS"
+                                    aa = "not_in_CDS"
+                                    aa_edited = "not_in_CDS"
+
+                                if edit != position:
+                                    codon = codon.lower()
+                                    codon_edited = codon_edited.lower()
+                                    aa = aa.lower()
+                                    aa_edited = aa_edited.lower()
+
+                                # lists for codons and aas per overlapping exons per guide/editing window
+                                codons.append(codon)
+                                codons_edited.append(codon_edited)
+                                aas.append(aa)
+                                aas_edited.append(aa_edited)
+
+                            # lists per guide for manual annotation
+                            gene_symbols.append(gene_symbol) # mostly only one, but could be multiple, if CDSs overlapp
+                            transcript_symbols.append(transcript_symbol) # multiple, categorized by according gene_symbol
+                            exon_numbers.append(str(int(exon_number))) # multiple, categorized by according transcript_symbol; consider calling int (and maybe str) earlier
+                            first_transcript_exons.append(str(int(first_transcript_exon))) # multiple, categorized by according transcript_symbol; consider calling int (and maybe str) earlier
+                            last_transcript_exons.append(str(int(last_transcript_exon))) # multiple, categorized by according transcript_symbol; consider calling int (and maybe str) earlier
+                            codonss.append(codons) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
+                            codonss_edited.append(codons_edited) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
+                            aass.append(aas) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
+                            aass_edited.append(aas_edited) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
+                            splice_sites_included.append(str(includes_splice_site)) # str() is necessary for collapsing later, find a better solution
+                            synonymouss.append(str(synonymous)) # str() is necessary for collapsing later, find a better solution
+
+                    else:
+                        gene_symbols = ['no_CDS_found']
+                        transcript_symbols = ['no_CDS_found']
+                        exon_numbers = ['no_CDS_found']
+                        first_transcript_exons = ['no_CDS_found']
+                        last_transcript_exons = ['no_CDS_found']
+                        codonss = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
+                        codonss_edited = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
+                        aass = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
+                        aass_edited = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
+                        splice_sites_included = ['no_CDS_found'] # [str(False)]
+                        synonymouss = ['no_CDS_found'] # [str(False)]
+
+                    # deprecated version
+                    # gene_symbolss.append('|'.join(gene_symbols))
+                    # transcript_symbolss.append('|'.join(trasncript_symbols))
+                    # exon_numberss.append('|'.join(exon_numbers))
+                    # last_transcript_exonss.append('|'.join(last_transcript_exons))
+                    # codonsss.append('|'.join(codonss))
+                    # codonsss_edited.append('|'.join(codonss_edited))
+                    # aasss.append('|'.join(aass))
+                    # aasss_edited.append('|'.join(aass_edited))
+
+                    # combine lists per guide for manual annotation in pl.DataFrame for better aggregation
+                    annotations = pl.DataFrame({'gene_symbolss': gene_symbols,
+                                                'transcript_symbolss': transcript_symbols,
+                                                'exon_numberss': exon_numbers,
+                                                'first_transcript_exonss': first_transcript_exons,
+                                                'last_transcript_exonss': last_transcript_exons,
+                                                'codonsss': codonss,
+                                                'codonsss_edited': codonss_edited,
+                                                'aasss': aass,
+                                                'aasss_edited':aass_edited,
+                                                'splice_sitess_included': splice_sites_included,
+                                                'synonymousss': synonymouss})
+
+                    # group everything except exon_numberss, transcript_symbolss, first_transcript_exonss, last_transcript_exonss; should or could this be extended
+                    annotations = annotations.group_by([col for col in annotations.columns if col not in ['exon_numberss', 'transcript_symbolss', 'first_transcript_exonss', 'last_transcript_exonss']], maintain_order=True).agg(pl.all())
+
+                    if not ((filter_synonymous) and ("True" not in annotations['synonymousss'].to_list()) or
+                            (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or
+                            (filter_specific) and (not specific) or
+                            (filter_missense) and (annotations['aasss'].to_list() == annotations['aasss_edited'].to_list())):
+
+                        # main fields
+                        possible_guides_with_pam.append(possible_guide_with_pam)
+                        possible_guides.append(possible_guide)
+                        possible_pams.append(possible_pam)
+                        possible_starts.append(str(target_seq_ref_start - guidelength + 1 if rev_com else target_seq_ref_start + 1)) # + 1 to switch to 1-based for SAM file
+                        possible_ends.append(str(target_seq_ref_start + 1 if rev_com else target_seq_ref_start + guidelength + 1)) # + 1 to switch to 1-based for SAM file
+                        possible_chroms.append(str(chrom))
+
+                        # combine annotations, if multiple gene symbol or frames appeared to get annotations per guide
+                        gene_symbolss.append(annotations['gene_symbolss'].to_list()) # consider different join character
+                        transcript_symbolss.append(annotations['transcript_symbolss'].to_list()) # consider different join character
+                        exon_numberss.append(annotations['exon_numberss'].to_list()) # consider different join character
+                        first_transcript_exonss.append(annotations['first_transcript_exonss'].to_list()) # consider different join character
+                        last_transcript_exonss.append(annotations['last_transcript_exonss'].to_list()) # consider different join character
+                        codonsss.append(annotations['codonsss'].to_list()) # consider different join character
+                        codonsss_edited.append(annotations['codonsss_edited'].to_list()) # consider different join character
+                        aasss.append(annotations['aasss'].to_list()) # consider different join character
+                        aasss_edited.append(annotations['aasss_edited'].to_list()) # consider different join character
+                        splice_sitess_included.append(annotations['splice_sitess_included'].to_list())
+                        synonymousss.append(annotations['synonymousss'].to_list())
+
+                        # lists per variant for shared.analyze_guide()
+                        edit_windows.append(edit_window)
+                        num_editss.append(str(num_edits)) # str() is necessary for collapsing later, find a better solution
+                        specifics.append(str(specific)) # str() is necessary for collapsing later, find a better solution
+                        edit_window_pluss.append(edit_window_plus)
+                        num_edits_pluss.append(str(num_edits_plus)) # str() is necessary for collapsing later, find a better solution
+                        specific_pluss.append(str(specific_plus)) # str() is necessary for collapsing later, find a better solution
+                        safety_regions.append(safety_region)
+                        num_edits_safetys.append(str(num_edits_safety)) # str() is necessary for collapsing later, find a better solution
+                        additional_in_safetys.append(str(additional_in_safety)) # str() is necessary for collapsing later, find a better solution
+                        edit_strings.append(edit_string)
+                        edit_pos_strings.append(edit_pos_string)
+                        specificitys.append(str(specificity)) # str() is necessary for collapsing later, find a better solution
+                        distance_median_variants.append(distance_median_variant)
+                        quality_scores_variants.append(quality_scores_variant)
+                        distance_median_alls.append(distance_median_all)
+                        quality_scores_alls.append(quality_scores_all)
+
+                # decreasing variant position for next loop; is there a more direct way? This seems unintuitive
+                variant_position -= 1
+                if rev_com:
+                    target_seq_ref_start -= 1
+                else:
+                    target_seq_ref_start += 1
+
+            if possible_guides == []:
+                gene_symbolss.append(["no_guides_found"])
+                possible_guides.append("no_guides_found")
+                possible_guides_with_pam.append("no_guides_found")
+                edit_windows.append("no_guides_found")
+                num_editss.append("no_guides_found")
+                specifics.append("no_guides_found")
+                edit_window_pluss.append("no_guides_found")
+                num_edits_pluss.append("no_guides_found")
+                specific_pluss.append("no_guides_found")
+                safety_regions.append("no_guides_found")
+                num_edits_safetys.append("no_guides_found")
+                additional_in_safetys.append("no_guides_found")
+                synonymousss.append(["no_guides_found"])
+                codonsss.append([["no_guides_found"]])
+                codonsss_edited.append([["no_guides_found"]])
+                aasss.append([["no_guides_found"]])
+                aasss_edited.append([["no_guides_found"]])
+                splice_sitess_included.append(["no_guides_found"])
+                edit_strings.append("no_guides_found")
+                edit_pos_strings.append("no_guides_found")
+                specificitys.append("no_guides_found")
+                distance_median_variants.append("no_guides_found")
+                quality_scores_variants.append("no_guides_found")
+                distance_median_alls.append("no_guides_found")
+                quality_scores_alls.append("no_guides_found")
+                transcript_symbolss.append([["no_guides_found"]])
+                exon_numberss.append([["no_guides_found"]])
+                first_transcript_exonss.append([["no_guides_found"]])
+                last_transcript_exonss.append([["no_guides_found"]])
+                possible_starts.append("no_guides_found")
+                possible_ends.append("no_guides_found")
+                possible_chroms.append("no_guides_found")
+
+            # final lists for editbale variants
+            all_variant.append(variant)
+            all_variant_real.append(variant_real)
+            all_editable.append(editable)
+            all_be_strings.append(be_string)
+            all_original_alt.append(original_alt)
+            all_target_seq_ref.append(target_seq_ref)
+            all_target_seq_ref_match.append(target_seq_ref_match)
+            all_target_seq.append(target_seq)
+            all_target_base_ref.append(target_base_ref)
+            all_target_base.append(target_base)
+            all_possible_guides_with_pam.append(possible_guides_with_pam) # list
+            all_edit_strings.append(edit_strings) # list
+            all_edit_pos_strings.append(edit_pos_strings) # list
+            all_possible_guides.append(possible_guides) # list
+            all_possible_pams.append(possible_pams)
+            all_rev_com.append("{}".format("-" if rev_com else "+"))
+            all_edit_window.append(edit_windows) # list
+            all_num_edits.append(num_editss)
+            all_specific.append(specifics) # list
+            all_edit_window_plus.append(edit_window_pluss) # list
+            all_num_edits_plus.append(num_edits_pluss)
+            all_specific_plus.append(specific_pluss) # list
+            all_safety_region.append(safety_regions)
+            all_num_edits_safety.append(num_edits_safetys)
+            all_additional_in_safety.append(additional_in_safetys)
+            all_specificity.append(specificitys) # list
+            all_distance_median_variant.append(distance_median_variants) # list
+            all_quality_scores_variant.append(quality_scores_variants) # list
+            all_distance_median_all.append(distance_median_alls) # list
+            all_quality_scores_all.append(quality_scores_alls) # list
+            all_gene_symbols.append(gene_symbolss) # list
+            all_transcript_symbols.append(transcript_symbolss) # list
+            all_exon_numbers.append(exon_numberss) # list
+            all_first_transcript_exons.append(first_transcript_exonss) # list
+            all_last_transcript_exons.append(last_transcript_exonss) # list
+            all_codonss.append(codonsss) # list
+            all_codonss_edited.append(codonsss_edited) # list
+            all_aass.append(aasss) # list
+            all_aass_edited.append(aasss_edited) # list
+            all_splice_sites_included.append(splice_sitess_included)
+            all_synonymouss.append(synonymousss)
+            all_guide_starts.append(possible_starts)
+            all_guide_ends.append(possible_ends)
+            all_chroms.append(possible_chroms)
+
+        else:
+            # final lists for non-editbale variants
+            all_variant.append(variant)
+            all_variant_real.append(variant_real) # not in output
+            all_editable.append(editable) # not in output
+            all_be_strings.append("no_be_available")
+            all_original_alt.append("no_be_available")
+            all_target_seq_ref.append("") # not in output
+            all_target_seq_ref_match.append(target_seq_ref_match)
+            all_target_seq.append("") # not in output
+            all_target_base_ref.append(target_base_ref) # not in output
+            all_target_base.append("") # not in output
+            all_possible_guides_with_pam.append(["no_be_available"])
+            all_edit_strings.append(["no_be_available"])
+            all_edit_pos_strings.append(["no_be_available"])
+            all_possible_guides.append(["no_be_available"])
+            all_possible_pams.append("") # not in output
+            all_rev_com.append("{}".format("no_be_available"))
+            all_edit_window.append(["no_be_available"])
+            all_num_edits.append(["no_be_available"])
+            all_specific.append(["no_be_available"])
+            all_edit_window_plus.append(["no_be_available"])
+            all_num_edits_plus.append(["no_be_available"])
+            all_specific_plus.append(["no_be_available"])
+            all_safety_region.append(["no_be_available"])
+            all_num_edits_safety.append(["no_be_available"])
+            all_additional_in_safety.append(["no_be_available"])
+            all_specificity.append(["no_be_available"])
+            all_distance_median_variant.append(["no_be_available"])
+            all_quality_scores_variant.append(["no_be_available"])
+            all_distance_median_all.append(["no_be_available"])
+            all_quality_scores_all.append(["no_be_available"])
+            all_gene_symbols.append([["no_be_available"]])
+            all_transcript_symbols.append([[["no_be_available"]]])
+            all_exon_numbers.append([[["no_be_available"]]])
+            all_first_transcript_exons.append([[["no_be_available"]]])
+            all_last_transcript_exons.append([[["no_be_available"]]])
+            all_codonss.append([[["no_be_available"]]])
+            all_codonss_edited.append([[["no_be_available"]]])
+            all_aass.append([[["no_be_available"]]])
+            all_aass_edited.append([[["no_be_available"]]])
+            all_splice_sites_included.append([["no_be_available"]])
+            all_synonymouss.append([["no_be_available"]])
+            all_guide_starts.append(["no_be_available"])
+            all_guide_ends.append(["no_be_available"])
+            all_chroms.append(["no_be_available"])
+
+    # transform lists to pl.DataFrame for better handling
+    sgrnas = pl.DataFrame({"variant": all_variant,
+                           "base_editor": all_be_strings,
+                           "symbol": all_gene_symbols,
+                           "guide": all_possible_guides,
+                           "guide_chrom": all_chroms,
+                           "guide_start": all_guide_starts,
+                           "guide_end": all_guide_ends,
+                           "guide_with_pam": all_possible_guides_with_pam,
+                           "edit_window": all_edit_window,
+                           "num_edits": all_num_edits,
+                           "specific": all_specific,
+                           "edit_window_plus": all_edit_window_plus,
+                           "num_edits_plus": all_num_edits_plus,
+                           "specific_plus": all_specific_plus,
+                           "safety_region": all_safety_region,
+                           "num_edits_safety": all_num_edits_safety,
+                           "additional_in_safety": all_additional_in_safety,
+                           "ne_plus": "NA_for_variants",
+                           "synonymous": all_synonymouss,
+                           "strand": all_rev_com,
+                           "codon_ref": all_codonss,
+                           "aa_ref": all_aass,
+                           "codon_edit": all_codonss_edited,
+                           "aa_edit": all_aass_edited,
+                           "splice_site_included": all_splice_sites_included,
+                           "originally_intended_ALT": all_original_alt,
+                           "ref_match": all_target_seq_ref_match,
+                           "off_target_bases": all_edit_strings,
+                           "edited_positions": all_edit_pos_strings,
+                           "specificity": all_specificity,
+                           "distance_median_variant": all_distance_median_variant,
+                           "efficiency_scores_variant": all_quality_scores_variant,
+                           "distance_median_all": all_distance_median_all,
+                           "efficiency_scores_all": all_quality_scores_all,
+                           "transcript": all_transcript_symbols,
+                           "exon_number": all_exon_numbers,
+                           "first_transcript_exon": all_first_transcript_exons,
+                           "last_transcript_exon": all_last_transcript_exons},
+                           strict=False) # get rid of this
+
+    if blast: # needs to be adjusted to polars
+
+        blast_guides.check_blastdb(refgenome, False)
+
+        sgrnas = sgrnas.with_row_index('index')
+
+        guides = sgrnas.select('index', 'guide').explode('guide') # should never be deeper then list in list before explode()
+
+        blast_results = blast_guides.guide_blast(guides,
+                                                 guidelength,
+                                                 refgenome,
+                                                 'variants',
+                                                 no_contigs)
+        if not blast_results.is_empty():
+            sgrnas = sgrnas.join(blast_results, left_on='index', right_on='indexvar', how='left')
+            sgrnas = sgrnas.with_columns(blastcount = pl.when((pl.col('guide') == ["no_guides_found"]) |
+                                                              (pl.col('guide') == ["no_be_available"]))
+                                                        .then(pl.col('guide'))
+                                                        .otherwise(pl.col('blastcount')))
+        else:
+            sgrnas = sgrnas.with_columns(blastcount = pl.col('guide'))
+        sgrnas = sgrnas.drop('index')
+
+    # add vep annotations, if wanted
+    if vep: # needs to be adjusted to polars
+
+        variants_vep = pl.DataFrame({'variant': all_variant_real}).with_row_index('for_sorting_later')
+        variants_non_vep = variants_vep.filter(pl.col('variant').is_in(['variant_is_improperly_formatted',
+                                                                        'no_input_gene_given',
+                                                                        'no_input_transcript_given',
+                                                                        'no_input_mutation_given',
+                                                                        'input_transcript_not_found',
+                                                                        'input_gene_not_found',
+                                                                        'reference_not_amino_acid',
+                                                                        'mutation_not_amino_acid',
+                                                                        'input_position_not_numeric',
+                                                                        'wrong_reference_amino_acid',
+                                                                        'non_existent_input_rsID',
+                                                                        'genomic_position_not_numeric',
+                                                                        'genomic_coordinates_not_found']))
+        variants_vep = variants_vep.filter(~pl.col('variant').is_in(['variant_is_improperly_formatted',
+                                                                     'no_input_gene_given',
+                                                                     'no_input_transcript_given',
+                                                                     'no_input_mutation_given',
+                                                                     'input_transcript_not_found',
+                                                                     'input_gene_not_found',
+                                                                     'reference_not_amino_acid',
+                                                                     'mutation_not_amino_acid',
+                                                                     'input_position_not_numeric',
+                                                                     'wrong_reference_amino_acid',
+                                                                     'non_existent_input_rsID',
+                                                                     'genomic_position_not_numeric',
+                                                                     'genomic_coordinates_not_found']))
+        variants_vep_sorted = shared.sort_variantsdf(variants_vep)
+        variants_vep_sorted_input = variants_vep_sorted['variant'].to_list()
+
+        vep_info, vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
+                                                               species=vep_species,
+                                                               assembly=vep_assembly,
+                                                               dir_cache=vep_dir_cache,
+                                                            #    dir_plugins=vep_dir_plugins, # currently not in use
+                                                               cache_version=vep_cache_version,
+                                                               flags=vep_flags)
+
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_chrom = vep_annotations['#CHROM'].cast(str)) # only usefull for testing
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_pos = vep_annotations['POS'].cast(str)) # only usefull for testing
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_id = vep_annotations['ID']) # only usefull for testing
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_ref = vep_annotations['REF']) # only usefull for testing
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_alt = vep_annotations['ALT']) # only usefull for testing
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_qual = vep_annotations['QUAL']) # only usefull for testing
+        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_filter = vep_annotations['FILTER']) # only usefull for testing
+        variants_vep_sorted = variants_vep_sorted.with_columns(vep_annotations['INFO'].alias('vep_info')) # is this col names good?
+
+        variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted)
+
+        # variants_non_vep = variants_non_vep.with_columns(vep_chrom = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        # variants_non_vep = variants_non_vep.with_columns(vep_pos = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        # variants_non_vep = variants_non_vep.with_columns(vep_id = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        # variants_non_vep = variants_non_vep.with_columns(vep_ref = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        # variants_non_vep = variants_non_vep.with_columns(vep_alt = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        # variants_non_vep = variants_non_vep.with_columns(vep_qual = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        # variants_non_vep = variants_non_vep.with_columns(vep_filter = pl.lit("not_suitable_for_VEP")) # only usefull for testing
+        variants_non_vep = variants_non_vep.with_columns(pl.lit("not_suitable_for_VEP").alias('vep_info')) # is this col names good?
+
+        variants_vep_resorted = pl.concat([variants_vep_resorted, variants_non_vep]).sort('for_sorting_later').drop('for_sorting_later')
+
+        # the next lines need to be changed in every branch individually
+        # sgrnas = sgrnas.with_columns(vep_chrom = variants_vep_resorted['vep_chrom'].cast(str)) # only usefull for testing
+        # sgrnas = sgrnas.with_columns(vep_pos = variants_vep_resorted['vep_pos'].cast(str)) # only usefull for testing
+        # sgrnas = sgrnas.with_columns(vep_id = variants_vep_resorted['vep_id']) # only usefull for testing
+        # sgrnas = sgrnas.with_columns(vep_ref = variants_vep_resorted['vep_ref']) # only usefull for testing
+        # sgrnas = sgrnas.with_columns(vep_alt = variants_vep_resorted['vep_alt']) # only usefull for testing
+        # sgrnas = sgrnas.with_columns(vep_qual = variants_vep_resorted['vep_qual']) # only usefull for testing
+        # sgrnas = sgrnas.with_columns(vep_filter = variants_vep_resorted['vep_filter']) # only usefull for testing
+        sgrnas = sgrnas.with_columns(variants_vep_resorted['vep_info'].alias(f'vep_info ({vep_info})')) # is this col names good?
+
+    symbols_to_contract = ['symbol']
+
+    splice_sites_to_modify = ['splice_site_included',
+                              'synonymous']
+
+    transcript_cols_to_modify_first = ['exon_number',
+                                       'transcript',
+                                       'first_transcript_exon',
+                                       'last_transcript_exon']
+
+    variant_cols_to_modify_first = ['codon_ref',
+                                    'aa_ref',
+                                    'codon_edit',
+                                    'aa_edit']
+
+    non_list_columns = ['variant',
+                        'symbol',
+                        'base_editor',
+                        'ne_plus',
+                        'strand',
+                        'originally_intended_ALT',
+                        'ref_match']
+
+    if vep:
+        non_list_columns += [f'vep_info ({vep_info})']
+
+    columns_to_modify_last = [col for col in sgrnas.columns if col not in non_list_columns]
+
+    sgrnas = sgrnas.with_columns(
+        pl.col(symbols_to_contract).list.eval(pl.element().list.unique(maintain_order=True).list.join("?")), # make nested symbol list unique and flatten; join with '?', if multiple symbols appear
+        pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.eval(pl.element().list.join("~")).list.join("^")),
+        pl.col(variant_cols_to_modify_first).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("^")), # this separator should be something different (the first one; old comment?)
+        pl.col(splice_sites_to_modify).list.eval(pl.element().list.join("^")) # splice_site_included on same level as transcript groups
+    )
+
+    if allpossible:
+        all_variant = sgrnas['variant'].to_list()
+        sgrnas = sgrnas.with_columns(pl.Series('variant', [f'{all_variant[i]}({all_variant_real[i]})' if all_variant[i].split(':')[-1] != all_variant_real[i] else all_variant[i] for i in range(len(all_variant))]))
+
+    if aspect == 'exploded': # one line per guide
+        sgrnas = sgrnas.explode(symbols_to_contract + columns_to_modify_last) # explode per guide (and the associated columns)
+
+    elif aspect == 'collapsed': # one line per variant
+        sgrnas = sgrnas.with_columns(
+            pl.col(symbols_to_contract).list.unique(maintain_order=True).list.join("?"), # make nested symbol list unique and flatten; join with '?', if multiple symbols appear
+            pl.col(columns_to_modify_last).list.join("•") # join guides (and the associated columns)
+        )
+
+    sgrnas = sgrnas.unique().sort(by=sgrnas.columns) # duplicates are unlikely due to all the annotations; consider revision
+
+    sam_df = sgrnas.filter((pl.col("guide").cast(str) != "no_guides_found") & # editbale, but no guides found
+                           (pl.col("guide").cast(str) != "no_be_available")) # not editable
+
+    sam_df = sam_df.select(
+        ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
+        ).with_columns(
+            pl.col("guide").str.split("•").alias("guide"),
+            pl.col("guide_chrom").str.split("•").alias("guide_chrom"),
+            pl.col("guide_start").str.split("•").alias("guide_start")
+            ).explode(['guide', 'guide_chrom', 'guide_start']) # force explosion
+
+    sam_df = sam_df.with_columns(
+        pl.col('variant').alias('QNAME'),
+        pl.when(pl.col("strand") == '+').then(0).otherwise(
+            pl.when(pl.col("strand") == '-').then(16)
+            ).alias('FLAG'),
+        pl.col('guide_chrom').alias('RNAME'),
+        pl.col('guide_start').cast(pl.Int64).alias('POS'),
+        pl.lit(255).alias('MAPQ'),
+        pl.lit(str(guidelength) + 'M').alias('CIGAR'),
+        pl.lit('*').alias('RNEXT'),
+        pl.lit(0).alias('PNEXT'),
+        pl.lit(0).alias('TLEN'),
+        pl.when(pl.col("strand") == '+').then(pl.col('guide')).otherwise(
+            pl.when(pl.col("strand") == '-').then(pl.col('guide').map_elements(shared.revcom, return_dtype=pl.String))
+            ).alias('SEQ'),
+        pl.lit('*').alias('QUAL')
+    ).select(['QNAME',
+              'FLAG',
+              'RNAME',
+              'POS',
+              'MAPQ',
+              'CIGAR',
+              'RNEXT',
+              'PNEXT',
+              'TLEN',
+              'SEQ',
+              'QUAL']).sort(by=[
+                  'RNAME',
+                  'POS',
+                  'QNAME',
+                  'FLAG',
+                  'MAPQ',
+                  'CIGAR',
+                  'RNEXT',
+                  'PNEXT',
+                  'TLEN',
+                  'SEQ',
+                  'QUAL'
+                  ])
+
+    sgrnas = sgrnas.drop(['ne_plus',
+                          'off_target_bases',
+                          'specificity'])
+
+    if not allpossible:
+        sgrnas = sgrnas.drop(['originally_intended_ALT'])
+
+    if edit_window_start_plus == 0 and edit_window_end_plus == 0:
+        sgrnas = sgrnas.drop(['edit_window_plus',
+                              'num_edits_plus',
+                              'specific_plus',
+                              'safety_region',
+                              'num_edits_safety',
+                              'additional_in_safety'])
+
+    return (sgrnas, sam_df)
+
+
+def output_sgrnas(sgrnas, output_file):
+
+    sgrnas.write_csv(output_file + ".tsv", separator='\t')
+
+    # filter for variant, where guides were found; is thiss still the best way?
+    sgrnas_filtered = sgrnas.filter((pl.col("guide").cast(str) != "no_guides_found") & # editbale, but no guides found
+                                    (pl.col("guide").cast(str) != "no_be_available")) # not editable
+
+    sgrnas_filtered.write_csv(output_file + "_filtered.tsv", separator='\t')
+
+
+def output_guides_sam(sam_df, output_file, refgenome):
+
+    sam_df.write_csv(output_file + "_filtered.sam", separator='\t', include_header=False)
+    pysam.view(output_file + "_filtered.sam",
+               '-b',
+               '-o', output_file + "_filtered_unsorted.bam",
+               '-t', refgenome + '.fai',
+               catch_stdout=False)
+    os.remove(output_file + "_filtered.sam")
+    pysam.sort('-o', output_file + "_filtered.bam", output_file + "_filtered_unsorted.bam") # should already be sorted, but this acts as a failsafe
+    os.remove(output_file + "_filtered_unsorted.bam")
+    pysam.index(output_file + "_filtered.bam")
+
+
+if __name__ == "__main__":
+    pass

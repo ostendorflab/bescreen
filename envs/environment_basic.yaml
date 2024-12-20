@@ -1,0 +1,12 @@
+name: bescreen_basic
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - polars
+  - pandas
+  - pyarrow
+  - pyfaidx
+  - pyranges
+  - scipy
+  - pysam

@@ -1,0 +1,20 @@
+OUTPUT_FASTA="bescreen/resources/Ensembl/release-112/fasta/homo_sapiens/dna/"
+OUTPUT_GTF="bescreen/resources/Ensembl/release-112/gtf/homo_sapiens/"
+OUTPUT_VEP="bescreen/resources/Ensembl/release-112/variation/indexed_vep_cache/"
+OUTPUT_DBSNP="bescreen/resources/dbSNP/snp/organisms/human_9606/VCF/"
+
+URL_FASTA="ftp://ftp.ensembl.org/pub/release-112/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+URL_GTF="ftp://ftp.ensembl.org/pub/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.gtf.gz"
+URL_VEP="ftp://ftp.ensembl.org/pub/release-112/variation/indexed_vep_cache/homo_sapiens_vep_112_GRCh38.tar.gz"
+URL_DBSNP="ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606/VCF/00-All.vcf.gz"
+
+mkdir -p "$OUTPUT_FASTA"
+mkdir -p "$OUTPUT_GTF"
+mkdir -p "$OUTPUT_VEP"
+mkdir -p "$OUTPUT_DBSNP"
+
+wget "$URL_FASTA" -P "$OUTPUT_FASTA"
+gunzip "${OUTPUT_FASTA}/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+wget "$URL_GTF" -P "$OUTPUT_GTF"
+wget "$URL_VEP" -P "$OUTPUT_VEP"
+wget "$URL_DBSNP" -P "$OUTPUT_DBSNP"

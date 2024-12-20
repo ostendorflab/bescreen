@@ -1,0 +1,14 @@
+name: bescreen_full_vepfixed
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - polars
+  - pandas
+  - pyarrow
+  - pyfaidx
+  - pyranges
+  - ensembl-vep>=112
+  - scipy
+  - blast
+  - pysam
