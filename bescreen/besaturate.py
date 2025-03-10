@@ -369,10 +369,44 @@ def saturate_bes(annotation_file,
                                             synonymous = False
 
                                     else:
-                                        codons.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
-                                        codons_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
-                                        aas.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
-                                        aas_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # codons.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # codons_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # aas.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # aas_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # this happens due to off-target effects in introns or the UTRs
+                                        codon = "intron"
+                                        codon_edited = "intron"
+                                        aa = "intron"
+                                        aa_edited = "intron"
+
+                                        if pos < (row["Start"] - 2):
+                                            if row["Strand"] == '+' and exon_number == first_transcript_exon:
+                                                codon = "5prime_UTR"
+                                                codon_edited = "5prime_UTR"
+                                                aa = "5prime_UTR"
+                                                aa_edited = "5prime_UTR"
+                                            elif row["Strand"] == '-' and exon_number == last_transcript_exon:
+                                                codon = "3prime_UTR"
+                                                codon_edited = "3prime_UTR"
+                                                aa = "3prime_UTR"
+                                                aa_edited = "3prime_UTR"
+
+                                        elif (row["End"] + 2) <= pos:
+                                            if row["Strand"] == '-' and exon_number == first_transcript_exon:
+                                                codon = "5prime_UTR"
+                                                codon_edited = "5prime_UTR"
+                                                aa = "5prime_UTR"
+                                                aa_edited = "5prime_UTR"
+                                            elif row["Strand"] == '+' and exon_number == last_transcript_exon:
+                                                codon = "3prime_UTR"
+                                                codon_edited = "3prime_UTR"
+                                                aa = "3prime_UTR"
+                                                aa_edited = "3prime_UTR"
+
+                                        codons.append(codon)
+                                        codons_edited.append(codon_edited)
+                                        aas.append(aa)
+                                        aas_edited.append(aa_edited)
 
                                 else: # failsafe; can be removed
                                     raise Exception
@@ -647,10 +681,44 @@ def saturate_bes(annotation_file,
                                             synonymous = False
 
                                     else:
-                                        codons.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
-                                        codons_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
-                                        aas.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
-                                        aas_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # codons.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # codons_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # aas.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # aas_edited.append('ANNOTATIONWARNING') # why does this happen? maybe different exon lenghts? annotations issues?
+                                        # this happens due to off-target effects in introns or the UTRs
+                                        codon = "intron"
+                                        codon_edited = "intron"
+                                        aa = "intron"
+                                        aa_edited = "intron"
+
+                                        if pos < (row["Start"] - 2):
+                                            if row["Strand"] == '+' and exon_number == first_transcript_exon:
+                                                codon = "5prime_UTR"
+                                                codon_edited = "5prime_UTR"
+                                                aa = "5prime_UTR"
+                                                aa_edited = "5prime_UTR"
+                                            elif row["Strand"] == '-' and exon_number == last_transcript_exon:
+                                                codon = "3prime_UTR"
+                                                codon_edited = "3prime_UTR"
+                                                aa = "3prime_UTR"
+                                                aa_edited = "3prime_UTR"
+
+                                        elif (row["End"] + 2) <= pos:
+                                            if row["Strand"] == '-' and exon_number == first_transcript_exon:
+                                                codon = "5prime_UTR"
+                                                codon_edited = "5prime_UTR"
+                                                aa = "5prime_UTR"
+                                                aa_edited = "5prime_UTR"
+                                            elif row["Strand"] == '+' and exon_number == last_transcript_exon:
+                                                codon = "3prime_UTR"
+                                                codon_edited = "3prime_UTR"
+                                                aa = "3prime_UTR"
+                                                aa_edited = "3prime_UTR"
+
+                                        codons.append(codon)
+                                        codons_edited.append(codon_edited)
+                                        aas.append(aa)
+                                        aas_edited.append(aa_edited)
 
                                 else: # failsafe; can be removed
                                     raise Exception

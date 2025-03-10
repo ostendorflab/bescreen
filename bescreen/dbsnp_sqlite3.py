@@ -154,7 +154,3 @@ if __name__ == '__main__':
 
     generate_rsid_db(snp_vcf_path_arg,
                      rsid_db_path_arg)
-
-
-if __name__ == "__main__":
-    pass
