@@ -41,7 +41,9 @@ def design_bes(annotation_file,
                filter_splice_site,
                filter_specific,
                filter_missense,
-               filter_nonsense):
+               filter_nonsense,
+               filter_stoplost,
+               filter_startlost):
 
     edits = {
         'A': 'G',
@@ -218,7 +220,9 @@ def design_bes(annotation_file,
                       filter_splice_site,
                       filter_specific,
                       filter_missense,
-                      filter_nonsense])
+                      filter_nonsense,
+                      filter_stoplost,
+                      filter_startlost])
 
     for variant in variant_list:
         variant_coords = variant.split("_")
@@ -767,7 +771,9 @@ def design_bes(annotation_file,
                             (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or
                             (filter_specific) and (not specific) or
                             (filter_missense) and (not guide_is_missense) or
-                            (filter_nonsense) and (not guide_is_stopgain)):
+                            (filter_nonsense) and (not guide_is_stopgain) or
+                            (filter_stoplost) and (not guide_is_stoplost) or
+                            (filter_startlost) and (not guide_is_startlost)):
 
                         # main fields
                         possible_guides_with_pam.append(possible_guide_with_pam)

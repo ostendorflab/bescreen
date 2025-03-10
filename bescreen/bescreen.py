@@ -82,6 +82,10 @@ def arguments():
                         action='store_true')
     parser.add_argument('--filter-nonsense', help='Pre-filter the output for nonsense (stop gain) guides',
                         action='store_true')
+    parser.add_argument('--filter-stoplost', help='Pre-filter the output for stop lost guides',
+                        action='store_true')
+    parser.add_argument('--filter-startlost', help='Pre-filter the output for start lost guides',
+                        action='store_true')
     parser.add_argument('--write-bam', help='Write a BAM file to view your guides in IGV (DO NOT USE THE SEQUENCES FOR YOUR LIBRARY SINCE REVERSE COMPLEMENT GUIDES WILL BE WRONG)',
                         action='store_true')
 
@@ -156,6 +160,8 @@ def arguments():
     filter_specific = args.filter_specific
     filter_missense = args.filter_missense
     filter_nonsense = args.filter_nonsense
+    filter_stoplost = args.filter_stoplost
+    filter_startlost = args.filter_startlost
     write_bam = args.write_bam
     # bedesigner
     ignorestring = args.ignore_string
@@ -252,6 +258,8 @@ def arguments():
             filter_specific,
             filter_missense,
             filter_nonsense,
+            filter_stoplost,
+            filter_startlost,
             write_bam)
 
 
@@ -360,6 +368,8 @@ if __name__ == "__main__":
     filter_specific_arg, \
     filter_missense_arg, \
     filter_nonsense_arg, \
+    filter_stoplost_arg, \
+    filter_startlost_arg, \
     write_bam_arg = arguments()
 
     mode_arg = check_mode(input_file_arg, input_variant_arg, gene_symbols_arg, regions_arg, input_format_arg)
@@ -396,7 +406,9 @@ if __name__ == "__main__":
                                                    filter_splice_site_arg,
                                                    filter_specific_arg,
                                                    filter_missense_arg,
-                                                   filter_nonsense_arg)
+                                                   filter_nonsense_arg,
+                                                   filter_stoplost_arg,
+                                                   filter_startlost_arg)
 
             bedesigner.output_sgrnas(guides, output_file_arg)
 
@@ -436,7 +448,9 @@ if __name__ == "__main__":
                                                       filter_splice_site_arg,
                                                       filter_specific_arg,
                                                       filter_missense_arg,
-                                                      filter_nonsense_arg)
+                                                      filter_nonsense_arg,
+                                                      filter_stoplost_arg,
+                                                      filter_startlost_arg)
 
             if not_found_genes: # redundant
                 if len(not_found_genes) == 1:
@@ -478,9 +492,9 @@ if __name__ == "__main__":
 
             if not_found_sequences: # redundant
                 if len(not_found_sequences) == 1:
-                    print(f'WARNING: The sequence {', '.join(not_found_sequences)} was not found in the reference genome. It will not be mentioned in the output tables.')
+                    print(f'WARNING: The region {', '.join(not_found_sequences)} was not found in the reference genome. It will not be mentioned in the output tables.')
                 elif len(not_found_sequences) > 1:
-                    print(f'WARNING: The {len(not_found_sequences)} sequences {', '.join(not_found_sequences)} were not found in the reference genome. They will not be mentioned in the output tables.')
+                    print(f'WARNING: The {len(not_found_sequences)} regions {', '.join(not_found_sequences)} were not found in the reference genome. They will not be mentioned in the output tables.')
 
             beregion.output_sgrnas(guides, guides_ne, output_file_arg)
 

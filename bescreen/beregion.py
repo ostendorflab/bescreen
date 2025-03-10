@@ -132,6 +132,8 @@ def saturate_region(ref_genome,
 
             # get region sequence
             sequence = ref_genome_pyfaidx[chrom][start:end] # pyranges transforms gtf file into 0-based
+            if not str(sequence):
+                raise
 
             #generate forward search string with:
             # 5' overhang to account for first base is last base of editing window
@@ -390,245 +392,253 @@ def saturate_region(ref_genome,
 
                     startpos_rev += 1
 
-    if not variant_output:
+    # if not variant_output: # this silences other errors
+    if regions_list == sequences_not_found:
         if len(regions_list) == 1:
-            raise ValueError("Your region was not found.")
+            raise ValueError(f"The region {', '.join(regions_list)} was not found in the reference genome.")
         if len(regions_list) > 1:
-            raise ValueError("None of your regions were found.")
+            raise ValueError(f"None of your {len(regions_list)} regions {', '.join(regions_list)} were found in the reference genome.")
 
-    sgrnas = pl.DataFrame({"variant": variant_output,
-                           "base_editor": be_output,
-                           "guide": guide_output,
-                           "guide_chrom": chroms_output,
-                           "guide_start": guide_starts_output,
-                           "guide_end": guide_ends_output,
-                           "guide_with_pam": guide_with_pam_output,
-                           "edit_window": edit_window_output,
-                           "num_edits": num_edits_output,
-                           "specific": specific_output,
-                           "edit_window_plus": edit_window_plus_output,
-                           "num_edits_plus": num_edits_plus_output,
-                           "specific_plus": specific_plus_output,
-                           "safety_region": safety_region_output,
-                           "num_edits_safety": num_edits_safety_output,
-                           "additional_in_safety": additional_in_safety_output,
-                           "strand": direction_output,
-                           "off_target_bases": edit_string_output,
-                           "edited_positions": edit_pos_string_output,
-                           "distance_median_all": distance_median_all_output,
-                           "efficiency_scores_all": quality_scores_all_output})
+    if variant_output: # if no guide is found at all
+        sgrnas = pl.DataFrame({"variant": variant_output,
+                            "base_editor": be_output,
+                            "guide": guide_output,
+                            "guide_chrom": chroms_output,
+                            "guide_start": guide_starts_output,
+                            "guide_end": guide_ends_output,
+                            "guide_with_pam": guide_with_pam_output,
+                            "edit_window": edit_window_output,
+                            "num_edits": num_edits_output,
+                            "specific": specific_output,
+                            "edit_window_plus": edit_window_plus_output,
+                            "num_edits_plus": num_edits_plus_output,
+                            "specific_plus": specific_plus_output,
+                            "safety_region": safety_region_output,
+                            "num_edits_safety": num_edits_safety_output,
+                            "additional_in_safety": additional_in_safety_output,
+                            "strand": direction_output,
+                            "off_target_bases": edit_string_output,
+                            "edited_positions": edit_pos_string_output,
+                            "distance_median_all": distance_median_all_output,
+                            "efficiency_scores_all": quality_scores_all_output})
 
-    sgrnas_ne = pl.DataFrame({"variant":  "NA_for_non_editing_guides",
-                              "base_editor": be_output_ne,
-                              "guide": guide_output_ne,
-                              "guide_chrom": chroms_output_ne,
-                              "guide_start": guide_starts_output_ne,
-                              "guide_end": guide_ends_output_ne,
-                              "guide_with_pam": guide_with_pam_output_ne,
-                              "edit_window": edit_window_output_ne,
-                              "edit_window_plus": edit_window_plus_output_ne,
-                              "safety_region": safety_region_output_ne,
-                              "ne_plus": ne_plus_output_ne,
-                              "strand": direction_output_ne})
+        sgrnas_ne = pl.DataFrame({"variant":  "NA_for_non_editing_guides",
+                                "base_editor": be_output_ne,
+                                "guide": guide_output_ne,
+                                "guide_chrom": chroms_output_ne,
+                                "guide_start": guide_starts_output_ne,
+                                "guide_end": guide_ends_output_ne,
+                                "guide_with_pam": guide_with_pam_output_ne,
+                                "edit_window": edit_window_output_ne,
+                                "edit_window_plus": edit_window_plus_output_ne,
+                                "safety_region": safety_region_output_ne,
+                                "ne_plus": ne_plus_output_ne,
+                                "strand": direction_output_ne})
 
-    if blast:
+        if blast:
 
-        blast_guides.check_blastdb(ref_genome, False)
+            blast_guides.check_blastdb(ref_genome, False)
 
-        sgrnas = sgrnas.with_row_index('index')
-        sgrnas_ne = sgrnas_ne.with_row_index('index')
+            sgrnas = sgrnas.with_row_index('index')
+            sgrnas_ne = sgrnas_ne.with_row_index('index')
 
-        guides_blast = sgrnas.select('index', 'guide')
-        blast_results = blast_guides.guide_blast(guides_blast,
-                                                 guidelength,
-                                                 ref_genome,
-                                                 'genes',
-                                                 no_contigs)
-        sgrnas = sgrnas.join(blast_results, on='index', how='left')
-
-        guides_ne_blast = sgrnas_ne.select('index', 'guide')
-        blast_results_ne = blast_guides.guide_blast(guides_ne_blast,
+            guides_blast = sgrnas.select('index', 'guide')
+            blast_results = blast_guides.guide_blast(guides_blast,
                                                     guidelength,
                                                     ref_genome,
                                                     'genes',
                                                     no_contigs)
-        sgrnas_ne = sgrnas_ne.join(blast_results_ne, on='index', how='left')
+            sgrnas = sgrnas.join(blast_results, on='index', how='left')
 
-        sgrnas = sgrnas.drop('index')
-        sgrnas_ne =sgrnas_ne.drop('index')
+            guides_ne_blast = sgrnas_ne.select('index', 'guide')
+            blast_results_ne = blast_guides.guide_blast(guides_ne_blast,
+                                                        guidelength,
+                                                        ref_genome,
+                                                        'genes',
+                                                        no_contigs)
+            sgrnas_ne = sgrnas_ne.join(blast_results_ne, on='index', how='left')
 
-    if vep: # better join by index
+            sgrnas = sgrnas.drop('index')
+            sgrnas_ne =sgrnas_ne.drop('index')
 
-        variants_vep = sgrnas.select('variant').with_row_index('original_index').explode('variant')
-        variants_vep_sorted = shared.sort_variantsdf(variants_vep)
-        variants_vep_sorted_input = variants_vep_sorted['variant'].to_list()
+        if vep: # better join by index
 
-        vep_info, vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
-                                                               species=vep_species,
-                                                               assembly=vep_assembly,
-                                                               dir_cache=vep_dir_cache,
-                                                            #    dir_plugins=vep_dir_plugins, # currently not in use
-                                                               cache_version=vep_cache_version,
-                                                               flags=vep_flags)
+            variants_vep = sgrnas.select('variant').with_row_index('original_index').explode('variant')
+            variants_vep_sorted = shared.sort_variantsdf(variants_vep)
+            variants_vep_sorted_input = variants_vep_sorted['variant'].to_list()
 
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_chrom = vep_annotations['#CHROM'].cast(str))
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_pos = vep_annotations['POS'].cast(str))
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_id = vep_annotations['ID'])
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_ref = vep_annotations['REF'])
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_alt = vep_annotations['ALT'])
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_qual = vep_annotations['QUAL'])
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_filter = vep_annotations['FILTER'])
-        variants_vep_sorted = variants_vep_sorted.with_columns(vep_annotations['INFO'].alias('vep_info'))
+            vep_info, vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
+                                                                species=vep_species,
+                                                                assembly=vep_assembly,
+                                                                dir_cache=vep_dir_cache,
+                                                                #    dir_plugins=vep_dir_plugins, # currently not in use
+                                                                cache_version=vep_cache_version,
+                                                                flags=vep_flags)
 
-        variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted)
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_chrom = vep_annotations['#CHROM'].cast(str))
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_pos = vep_annotations['POS'].cast(str))
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_id = vep_annotations['ID'])
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_ref = vep_annotations['REF'])
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_alt = vep_annotations['ALT'])
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_qual = vep_annotations['QUAL'])
+            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_filter = vep_annotations['FILTER'])
+            variants_vep_sorted = variants_vep_sorted.with_columns(vep_annotations['INFO'].alias('vep_info'))
 
-        variants_vep_resorted = variants_vep_resorted.group_by('original_index', maintain_order=True).agg(pl.all())
+            variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted)
 
-        # sgrnas = sgrnas.with_columns(vep_chrom = variants_vep_resorted['vep_chrom'])
-        # sgrnas = sgrnas.with_columns(vep_pos = variants_vep_resorted['vep_pos'])
-        # sgrnas = sgrnas.with_columns(vep_id = variants_vep_resorted['vep_id'])
-        # sgrnas = sgrnas.with_columns(vep_ref = variants_vep_resorted['vep_ref'])
-        # sgrnas = sgrnas.with_columns(vep_alt = variants_vep_resorted['vep_alt'])
-        # sgrnas = sgrnas.with_columns(vep_qual = variants_vep_resorted['vep_qual'])
-        # sgrnas = sgrnas.with_columns(vep_filter = variants_vep_resorted['vep_filter'])
-        sgrnas = sgrnas.with_columns(variants_vep_resorted['vep_info'].alias(f'vep_info ({vep_info})'))
+            variants_vep_resorted = variants_vep_resorted.group_by('original_index', maintain_order=True).agg(pl.all())
 
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_chrom = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_pos = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_id = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_ref = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_alt = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_qual = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(vep_filter = pl.lit("NA_for_non_editing_guides"))
-        # sgrnas_ne = sgrnas_ne.with_columns(pl.lit("NA_for_non_editing_guides").alias(f'vep_info ({vep_info})'))
+            # sgrnas = sgrnas.with_columns(vep_chrom = variants_vep_resorted['vep_chrom'])
+            # sgrnas = sgrnas.with_columns(vep_pos = variants_vep_resorted['vep_pos'])
+            # sgrnas = sgrnas.with_columns(vep_id = variants_vep_resorted['vep_id'])
+            # sgrnas = sgrnas.with_columns(vep_ref = variants_vep_resorted['vep_ref'])
+            # sgrnas = sgrnas.with_columns(vep_alt = variants_vep_resorted['vep_alt'])
+            # sgrnas = sgrnas.with_columns(vep_qual = variants_vep_resorted['vep_qual'])
+            # sgrnas = sgrnas.with_columns(vep_filter = variants_vep_resorted['vep_filter'])
+            sgrnas = sgrnas.with_columns(variants_vep_resorted['vep_info'].alias(f'vep_info ({vep_info})'))
 
-    variant_cols_to_modify_second = ['variant']
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_chrom = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_pos = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_id = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_ref = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_alt = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_qual = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_filter = pl.lit("NA_for_non_editing_guides"))
+            # sgrnas_ne = sgrnas_ne.with_columns(pl.lit("NA_for_non_editing_guides").alias(f'vep_info ({vep_info})'))
 
-    if vep:
-        # variant_cols_to_modify_second += ['vep_chrom',
-        #                                   'vep_pos',
-        #                                   'vep_id',
-        #                                   'vep_ref',
-        #                                   'vep_alt',
-        #                                   'vep_qual',
-        #                                   'vep_filter',
-        #                                   f'vep_info ({vep_info})']
-        variant_cols_to_modify_second += [f'vep_info ({vep_info})']
+        variant_cols_to_modify_second = ['variant']
 
-    if aspect == 'exploded': # maybe also show off target edits in codons in small letters as for bedesigner
-        sgrnas = sgrnas.explode(variant_cols_to_modify_second)
+        if vep:
+            # variant_cols_to_modify_second += ['vep_chrom',
+            #                                   'vep_pos',
+            #                                   'vep_id',
+            #                                   'vep_ref',
+            #                                   'vep_alt',
+            #                                   'vep_qual',
+            #                                   'vep_filter',
+            #                                   f'vep_info ({vep_info})']
+            variant_cols_to_modify_second += [f'vep_info ({vep_info})']
 
-    elif aspect == 'collapsed':
-        sgrnas = sgrnas.with_columns(
-            pl.col(variant_cols_to_modify_second).list.join(";")
-        )
+        if aspect == 'exploded': # maybe also show off target edits in codons in small letters as for bedesigner
+            sgrnas = sgrnas.explode(variant_cols_to_modify_second)
 
-    sgrnas = sgrnas.unique().sort(by=sgrnas.columns)
-    sgrnas_ne = sgrnas_ne.unique().sort(by=sgrnas_ne.columns)
+        elif aspect == 'collapsed':
+            sgrnas = sgrnas.with_columns(
+                pl.col(variant_cols_to_modify_second).list.join(";")
+            )
 
-    sam_df = sgrnas.select(
-        ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
-        ) # will always be exploded, but maybe unify somehow different?
+        sgrnas = sgrnas.unique().sort(by=sgrnas.columns)
+        sgrnas_ne = sgrnas_ne.unique().sort(by=sgrnas_ne.columns)
 
-    sam_ne_df = sgrnas_ne.select(
-        ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
-        ) # will always be exploded, but maybe unify somehow different?
+        sam_df = sgrnas.select(
+            ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
+            ) # will always be exploded, but maybe unify somehow different?
 
-    sam_df = sam_df.with_columns(
-        pl.col('variant').alias('QNAME'),
-        pl.when(pl.col("strand") == '+').then(0).otherwise(
-            pl.when(pl.col("strand") == '-').then(16)
-            ).alias('FLAG'),
-        pl.col('guide_chrom').alias('RNAME'),
-        pl.col('guide_start').cast(pl.Int64).alias('POS'),
-        pl.lit(255).alias('MAPQ'),
-        pl.lit(str(guidelength) + 'M').alias('CIGAR'),
-        pl.lit('*').alias('RNEXT'),
-        pl.lit(0).alias('PNEXT'),
-        pl.lit(0).alias('TLEN'),
-        pl.when(pl.col("strand") == '+').then(pl.col('guide')).otherwise(
-            pl.when(pl.col("strand") == '-').then(pl.col('guide').map_elements(shared.revcom, return_dtype=pl.String))
-            ).alias('SEQ'),
-        pl.lit('*').alias('QUAL')
-    ).select(['QNAME',
-              'FLAG',
-              'RNAME',
-              'POS',
-              'MAPQ',
-              'CIGAR',
-              'RNEXT',
-              'PNEXT',
-              'TLEN',
-              'SEQ',
-              'QUAL']).sort(by=[
-                  'RNAME',
-                  'POS',
-                  'QNAME',
-                  'FLAG',
-                  'MAPQ',
-                  'CIGAR',
-                  'RNEXT',
-                  'PNEXT',
-                  'TLEN',
-                  'SEQ',
-                  'QUAL'
-                  ])
+        sam_ne_df = sgrnas_ne.select(
+            ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
+            ) # will always be exploded, but maybe unify somehow different?
 
-    sam_ne_df = sam_ne_df.with_columns(
-        pl.col('variant').alias('QNAME'),
-        pl.when(pl.col("strand") == '+').then(0).otherwise(
-            pl.when(pl.col("strand") == '-').then(16)
-            ).alias('FLAG'),
-        pl.col('guide_chrom').alias('RNAME'),
-        pl.col('guide_start').cast(pl.Int64).alias('POS'),
-        pl.lit(255).alias('MAPQ'),
-        pl.lit(str(guidelength) + 'M').alias('CIGAR'),
-        pl.lit('*').alias('RNEXT'),
-        pl.lit(0).alias('PNEXT'),
-        pl.lit(0).alias('TLEN'),
-        pl.when(pl.col("strand") == '+').then(pl.col('guide')).otherwise(
-            pl.when(pl.col("strand") == '-').then(pl.col('guide').map_elements(shared.revcom, return_dtype=pl.String))
-            ).alias('SEQ'),
-        pl.lit('*').alias('QUAL')
-    ).select(['QNAME',
-              'FLAG',
-              'RNAME',
-              'POS',
-              'MAPQ',
-              'CIGAR',
-              'RNEXT',
-              'PNEXT',
-              'TLEN',
-              'SEQ',
-              'QUAL']).sort(by=[
-                  'RNAME',
-                  'POS',
-                  'QNAME',
-                  'FLAG',
-                  'MAPQ',
-                  'CIGAR',
-                  'RNEXT',
-                  'PNEXT',
-                  'TLEN',
-                  'SEQ',
-                  'QUAL'
-                  ])
+        sam_df = sam_df.with_columns(
+            pl.col('variant').alias('QNAME'),
+            pl.when(pl.col("strand") == '+').then(0).otherwise(
+                pl.when(pl.col("strand") == '-').then(16)
+                ).alias('FLAG'),
+            pl.col('guide_chrom').alias('RNAME'),
+            pl.col('guide_start').cast(pl.Int64).alias('POS'),
+            pl.lit(255).alias('MAPQ'),
+            pl.lit(str(guidelength) + 'M').alias('CIGAR'),
+            pl.lit('*').alias('RNEXT'),
+            pl.lit(0).alias('PNEXT'),
+            pl.lit(0).alias('TLEN'),
+            pl.when(pl.col("strand") == '+').then(pl.col('guide')).otherwise(
+                pl.when(pl.col("strand") == '-').then(pl.col('guide').map_elements(shared.revcom, return_dtype=pl.String))
+                ).alias('SEQ'),
+            pl.lit('*').alias('QUAL')
+        ).select(['QNAME',
+                'FLAG',
+                'RNAME',
+                'POS',
+                'MAPQ',
+                'CIGAR',
+                'RNEXT',
+                'PNEXT',
+                'TLEN',
+                'SEQ',
+                'QUAL']).sort(by=[
+                    'RNAME',
+                    'POS',
+                    'QNAME',
+                    'FLAG',
+                    'MAPQ',
+                    'CIGAR',
+                    'RNEXT',
+                    'PNEXT',
+                    'TLEN',
+                    'SEQ',
+                    'QUAL'
+                    ])
 
-    sgrnas = sgrnas.drop(['off_target_bases'])
+        sam_ne_df = sam_ne_df.with_columns(
+            pl.col('variant').alias('QNAME'),
+            pl.when(pl.col("strand") == '+').then(0).otherwise(
+                pl.when(pl.col("strand") == '-').then(16)
+                ).alias('FLAG'),
+            pl.col('guide_chrom').alias('RNAME'),
+            pl.col('guide_start').cast(pl.Int64).alias('POS'),
+            pl.lit(255).alias('MAPQ'),
+            pl.lit(str(guidelength) + 'M').alias('CIGAR'),
+            pl.lit('*').alias('RNEXT'),
+            pl.lit(0).alias('PNEXT'),
+            pl.lit(0).alias('TLEN'),
+            pl.when(pl.col("strand") == '+').then(pl.col('guide')).otherwise(
+                pl.when(pl.col("strand") == '-').then(pl.col('guide').map_elements(shared.revcom, return_dtype=pl.String))
+                ).alias('SEQ'),
+            pl.lit('*').alias('QUAL')
+        ).select(['QNAME',
+                'FLAG',
+                'RNAME',
+                'POS',
+                'MAPQ',
+                'CIGAR',
+                'RNEXT',
+                'PNEXT',
+                'TLEN',
+                'SEQ',
+                'QUAL']).sort(by=[
+                    'RNAME',
+                    'POS',
+                    'QNAME',
+                    'FLAG',
+                    'MAPQ',
+                    'CIGAR',
+                    'RNEXT',
+                    'PNEXT',
+                    'TLEN',
+                    'SEQ',
+                    'QUAL'
+                    ])
 
-    sgrnas_ne = sgrnas_ne.drop(['variant'])
+        sgrnas = sgrnas.drop(['off_target_bases'])
 
-    if edit_window_start_plus == 0 and edit_window_end_plus == 0:
-        sgrnas = sgrnas.drop(['edit_window_plus',
-                              'num_edits_plus',
-                              'specific_plus',
-                              'safety_region',
-                              'num_edits_safety',
-                              'additional_in_safety'])
+        sgrnas_ne = sgrnas_ne.drop(['variant'])
 
-        sgrnas_ne = sgrnas_ne.drop(['edit_window_plus',
-                                    'safety_region',
-                                    'ne_plus'])
+        if edit_window_start_plus == 0 and edit_window_end_plus == 0:
+            sgrnas = sgrnas.drop(['edit_window_plus',
+                                'num_edits_plus',
+                                'specific_plus',
+                                'safety_region',
+                                'num_edits_safety',
+                                'additional_in_safety'])
+
+            sgrnas_ne = sgrnas_ne.drop(['edit_window_plus',
+                                        'safety_region',
+                                        'ne_plus'])
+
+    else:
+        sgrnas = pl.DataFrame()
+        sgrnas_ne = pl.DataFrame()
+        sam_df = pl.DataFrame()
+        sam_ne_df = pl.DataFrame()
 
     return (sgrnas, sgrnas_ne, sam_df, sam_ne_df, sequences_not_found)
 
