@@ -40,7 +40,8 @@ def design_bes(annotation_file,
                filter_synonymous,
                filter_splice_site,
                filter_specific,
-               filter_missense):
+               filter_missense,
+               filter_nonsense):
 
     edits = {
         'A': 'G',
@@ -210,6 +211,14 @@ def design_bes(annotation_file,
 
     # precalculation of quality scores for positions in editing window
     distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+
+    # only need to do this once
+    non_stop_aas = list(set([x for x in shared.codon_sun_one_letter.values() if x != 'Stop']))
+    any_filter = any([filter_synonymous,
+                      filter_splice_site,
+                      filter_specific,
+                      filter_missense,
+                      filter_nonsense])
 
     for variant in variant_list:
         variant_coords = variant.split("_")
@@ -708,10 +717,57 @@ def design_bes(annotation_file,
                     # group everything except exon_numberss, transcript_symbolss, first_transcript_exonss, last_transcript_exonss; should or could this be extended
                     annotations = annotations.group_by([col for col in annotations.columns if col not in ['exon_numberss', 'transcript_symbolss', 'first_transcript_exonss', 'last_transcript_exonss']], maintain_order=True).agg(pl.all())
 
+                    aas_for_filtering = []
+                    for aa_list in annotations['aasss'].to_list():
+                        aas_for_filtering += aa_list
+
+                    aas_edited_for_filtering = []
+                    for aa_edited_list in annotations['aasss_edited'].to_list():
+                        aas_edited_for_filtering += aa_edited_list
+
+                    guide_is_missense = False
+                    guide_is_synonymous = False
+                    guide_is_stopgain = False
+                    guide_is_startlost = False
+                    guide_is_stoplost = False
+
+                    # consequence = []
+
+                    if any_filter:
+                        for i, aa in enumerate(aas_for_filtering):
+                            aa_editied = aas_edited_for_filtering[i]
+                            if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
+                                guide_is_missense = True
+                                # consequence.append('missense')
+                            elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
+                                guide_is_synonymous = True
+                                # consequence.append('synonymous')
+
+                            elif aa != 'Stop' and aa_editied == 'Stop':
+                                guide_is_stopgain = True
+                                # consequence.append('stopgain')
+                            elif aa == 'Stop' and aa_editied != 'Stop':
+                                guide_is_stoplost = True
+                                # consequence.append('stoplost')
+                            elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
+                                guide_is_synonymous = True
+                                # consequence.append('synonymous')
+
+                            elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                guide_is_startlost = True
+                                # consequence.append('startlost')
+                            elif aa == 'StartM' and aa_editied =='M': # can't happen
+                                guide_is_synonymous = True
+                                # consequence.append('synonymous')
+
+                            # else: # should not happen; only necessary, if using consequence list
+                            #     consequence.append('unknown')
+
                     if not ((filter_synonymous) and ("True" not in annotations['synonymousss'].to_list()) or
                             (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or
                             (filter_specific) and (not specific) or
-                            (filter_missense) and (annotations['aasss'].to_list() == annotations['aasss_edited'].to_list())):
+                            (filter_missense) and (not guide_is_missense) or
+                            (filter_nonsense) and (not guide_is_stopgain)):
 
                         # main fields
                         possible_guides_with_pam.append(possible_guide_with_pam)

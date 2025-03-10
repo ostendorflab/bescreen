@@ -34,7 +34,8 @@ def saturate_bes(annotation_file,
                  filter_synonymous,
                  filter_splice_site,
                  filter_specific,
-                 filter_missense):
+                 filter_missense,
+                 filter_nonsense):
 
     bes = {
         'ABE': {'fwd': {'REF': 'A', 'ALT': 'G'},
@@ -154,6 +155,14 @@ def saturate_bes(annotation_file,
 
     # precalculation of quality scores for positions in editing window
     distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+
+    # only need to do this once
+    non_stop_aas = list(set([x for x in shared.codon_sun_one_letter.values() if x != 'Stop']))
+    any_filter = any([filter_synonymous,
+                      filter_splice_site,
+                      filter_specific,
+                      filter_missense,
+                      filter_nonsense])
 
     # iterate through genes and cds-exons
     for row in cdss_gene.iter_rows(named=True):
@@ -442,10 +451,49 @@ def saturate_bes(annotation_file,
                             #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
                             #     raise Exception("output of analyze_guide() wrong in forward search")
 
+                            guide_is_missense = False
+                            guide_is_synonymous = False
+                            guide_is_stopgain = False
+                            guide_is_startlost = False
+                            guide_is_stoplost = False
+
+                            # consequence = []
+
+                            if any_filter:
+                                for i, aa in enumerate(aas):
+                                    aa_editied = aas_edited[i]
+                                    if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
+                                        guide_is_missense = True
+                                        # consequence.append('missense')
+                                    elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
+                                        guide_is_synonymous = True
+                                        # consequence.append('synonymous')
+
+                                    elif aa != 'Stop' and aa_editied == 'Stop':
+                                        guide_is_stopgain = True
+                                        # consequence.append('stopgain')
+                                    elif aa == 'Stop' and aa_editied != 'Stop':
+                                        guide_is_stoplost = True
+                                        # consequence.append('stoplost')
+                                    elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
+                                        guide_is_synonymous = True
+                                        # consequence.append('synonymous')
+
+                                    elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                        guide_is_startlost = True
+                                        # consequence.append('startlost')
+                                    elif aa == 'StartM' and aa_editied =='M': # can't happen
+                                        guide_is_synonymous = True
+                                        # consequence.append('synonymous')
+
+                                    # else: # should not happen; only necessary, if using consequence list
+                                    #     consequence.append('unknown')
+
                             if not ((filter_synonymous) and (not synonymous) or
                                     (filter_splice_site) and (not includes_splice_site) or
                                     (filter_specific) and (not specific) or
-                                    (filter_missense) and (aas == aas_edited)):
+                                    (filter_missense) and (not guide_is_missense) or
+                                    (filter_nonsense) and (not guide_is_stopgain)):
 
                                 symbol_output.append(gene_symbol)
                                 transcript_output.append(transcript_symbol)
@@ -757,10 +805,49 @@ def saturate_bes(annotation_file,
                             #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
                             #     raise Exception("output of analyze_guide() wrong in reverse search")
 
+                            guide_is_missense = False
+                            guide_is_synonymous = False
+                            guide_is_stopgain = False
+                            guide_is_startlost = False
+                            guide_is_stoplost = False
+
+                            # consequence = []
+
+                            if any_filter:
+                                for i, aa in enumerate(aas):
+                                    aa_editied = aas_edited[i]
+                                    if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
+                                        guide_is_missense = True
+                                        # consequence.append('missense')
+                                    elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
+                                        guide_is_synonymous = True
+                                        # consequence.append('synonymous')
+
+                                    elif aa != 'Stop' and aa_editied == 'Stop':
+                                        guide_is_stopgain = True
+                                        # consequence.append('stopgain')
+                                    elif aa == 'Stop' and aa_editied != 'Stop':
+                                        guide_is_stoplost = True
+                                        # consequence.append('stoplost')
+                                    elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
+                                        guide_is_synonymous = True
+                                        # consequence.append('synonymous')
+
+                                    elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                        guide_is_startlost = True
+                                        # consequence.append('startlost')
+                                    elif aa == 'StartM' and aa_editied =='M': # can't happen
+                                        guide_is_synonymous = True
+                                        # consequence.append('synonymous')
+
+                                    # else: # should not happen; only necessary, if using consequence list
+                                    #     consequence.append('unknown')
+
                             if not ((filter_synonymous) and (not synonymous) or
                                     (filter_splice_site) and (not includes_splice_site) or
                                     (filter_specific) and (not specific) or
-                                    (filter_missense) and (aas == aas_edited)):
+                                    (filter_missense) and (not guide_is_missense) or
+                                    (filter_nonsense) and (not guide_is_stopgain)):
 
                                 symbol_output.append(gene_symbol)
                                 transcript_output.append(transcript_symbol)

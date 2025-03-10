@@ -80,6 +80,8 @@ def arguments():
                         action='store_true')
     parser.add_argument('--filter-missense', help='Pre-filter the output for missense guides',
                         action='store_true')
+    parser.add_argument('--filter-nonsense', help='Pre-filter the output for nonsense (stop gain) guides',
+                        action='store_true')
     parser.add_argument('--write-bam', help='Write a BAM file to view your guides in IGV (DO NOT USE THE SEQUENCES FOR YOUR LIBRARY SINCE REVERSE COMPLEMENT GUIDES WILL BE WRONG)',
                         action='store_true')
 
@@ -153,6 +155,7 @@ def arguments():
     filter_splice_site = args.filter_splice_site
     filter_specific = args.filter_specific
     filter_missense = args.filter_missense
+    filter_nonsense = args.filter_nonsense
     write_bam = args.write_bam
     # bedesigner
     ignorestring = args.ignore_string
@@ -248,6 +251,7 @@ def arguments():
             filter_splice_site,
             filter_specific,
             filter_missense,
+            filter_nonsense,
             write_bam)
 
 
@@ -355,6 +359,7 @@ if __name__ == "__main__":
     filter_splice_site_arg, \
     filter_specific_arg, \
     filter_missense_arg, \
+    filter_nonsense_arg, \
     write_bam_arg = arguments()
 
     mode_arg = check_mode(input_file_arg, input_variant_arg, gene_symbols_arg, regions_arg, input_format_arg)
@@ -390,7 +395,8 @@ if __name__ == "__main__":
                                                    filter_synonymous_arg,
                                                    filter_splice_site_arg,
                                                    filter_specific_arg,
-                                                   filter_missense_arg)
+                                                   filter_missense_arg,
+                                                   filter_nonsense_arg)
 
             bedesigner.output_sgrnas(guides, output_file_arg)
 
@@ -429,7 +435,8 @@ if __name__ == "__main__":
                                                       filter_synonymous_arg,
                                                       filter_splice_site_arg,
                                                       filter_specific_arg,
-                                                      filter_missense_arg)
+                                                      filter_missense_arg,
+                                                      filter_nonsense_arg)
 
             if not_found_genes: # redundant
                 if len(not_found_genes) == 1:
