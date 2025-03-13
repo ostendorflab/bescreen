@@ -127,8 +127,8 @@ def saturate_region(ref_genome,
         try:
             chrom, positions = region.split(':')
             start, end = positions.split('-')
-            start = int(start)
-            end = int(end)
+            start = int(start) - 1 # convert 1-based to 0-based
+            end = int(end) # - 1 + 1 # convert to 1-based to 0-based and include end
 
             # get region sequence
             sequence = ref_genome_pyfaidx[chrom][start:end] # pyranges transforms gtf file into 0-based
