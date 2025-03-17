@@ -399,7 +399,10 @@ def saturate_region(ref_genome,
         if len(regions_list) > 1:
             raise ValueError(f"None of your {len(regions_list)} regions {', '.join(regions_list)} were found in the reference genome.")
 
-    if variant_output: # if no guide is found at all
+    variant_cols_to_modify_second = ['variant']
+
+    # editing guides found
+    if guide_output: # if no guide is found at all
         sgrnas = pl.DataFrame({"variant": variant_output,
                             "base_editor": be_output,
                             "guide": guide_output,
@@ -422,26 +425,11 @@ def saturate_region(ref_genome,
                             "distance_median_all": distance_median_all_output,
                             "efficiency_scores_all": quality_scores_all_output})
 
-        sgrnas_ne = pl.DataFrame({"variant":  "NA_for_non_editing_guides",
-                                "base_editor": be_output_ne,
-                                "guide": guide_output_ne,
-                                "guide_chrom": chroms_output_ne,
-                                "guide_start": guide_starts_output_ne,
-                                "guide_end": guide_ends_output_ne,
-                                "guide_with_pam": guide_with_pam_output_ne,
-                                "edit_window": edit_window_output_ne,
-                                "edit_window_plus": edit_window_plus_output_ne,
-                                "safety_region": safety_region_output_ne,
-                                "ne_plus": ne_plus_output_ne,
-                                "strand": direction_output_ne})
-
         if blast:
 
             blast_guides.check_blastdb(ref_genome, False)
 
             sgrnas = sgrnas.with_row_index('index')
-            sgrnas_ne = sgrnas_ne.with_row_index('index')
-
             guides_blast = sgrnas.select('index', 'guide')
             blast_results = blast_guides.guide_blast(guides_blast,
                                                     guidelength,
@@ -449,17 +437,7 @@ def saturate_region(ref_genome,
                                                     'genes',
                                                     no_contigs)
             sgrnas = sgrnas.join(blast_results, on='index', how='left')
-
-            guides_ne_blast = sgrnas_ne.select('index', 'guide')
-            blast_results_ne = blast_guides.guide_blast(guides_ne_blast,
-                                                        guidelength,
-                                                        ref_genome,
-                                                        'genes',
-                                                        no_contigs)
-            sgrnas_ne = sgrnas_ne.join(blast_results_ne, on='index', how='left')
-
             sgrnas = sgrnas.drop('index')
-            sgrnas_ne =sgrnas_ne.drop('index')
 
         if vep: # better join by index
 
@@ -497,18 +475,15 @@ def saturate_region(ref_genome,
             # sgrnas = sgrnas.with_columns(vep_filter = variants_vep_resorted['vep_filter'])
             sgrnas = sgrnas.with_columns(variants_vep_resorted['vep_info'].alias(f'vep_info ({vep_info})'))
 
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_chrom = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_pos = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_id = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_ref = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_alt = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_qual = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_filter = pl.lit("NA_for_non_editing_guides"))
-            # sgrnas_ne = sgrnas_ne.with_columns(pl.lit("NA_for_non_editing_guides").alias(f'vep_info ({vep_info})'))
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_chrom = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_pos = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_id = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_ref = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_alt = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_qual = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(vep_filter = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
+            # sgrnas_ne = sgrnas_ne.with_columns(pl.lit("NA_for_non_editing_guides").alias(f'vep_info ({vep_info})')) # if put into use, needs to be integrated into sgrnas_ne block
 
-        variant_cols_to_modify_second = ['variant']
-
-        if vep:
             # variant_cols_to_modify_second += ['vep_chrom',
             #                                   'vep_pos',
             #                                   'vep_id',
@@ -516,8 +491,8 @@ def saturate_region(ref_genome,
             #                                   'vep_alt',
             #                                   'vep_qual',
             #                                   'vep_filter',
-            #                                   f'vep_info ({vep_info})']
-            variant_cols_to_modify_second += [f'vep_info ({vep_info})']
+            #                                   f'vep_info ({vep_info})'] # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
+            variant_cols_to_modify_second += [f'vep_info ({vep_info})'] # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
 
         if aspect == 'exploded': # maybe also show off target edits in codons in small letters as for bedesigner
             sgrnas = sgrnas.explode(variant_cols_to_modify_second)
@@ -528,13 +503,8 @@ def saturate_region(ref_genome,
             )
 
         sgrnas = sgrnas.unique().sort(by=sgrnas.columns)
-        sgrnas_ne = sgrnas_ne.unique().sort(by=sgrnas_ne.columns)
 
         sam_df = sgrnas.select(
-            ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
-            ) # will always be exploded, but maybe unify somehow different?
-
-        sam_ne_df = sgrnas_ne.select(
             ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
             ) # will always be exploded, but maybe unify somehow different?
 
@@ -578,6 +548,53 @@ def saturate_region(ref_genome,
                     'QUAL'
                     ])
 
+        sgrnas = sgrnas.drop(['off_target_bases'])
+
+        if edit_window_start_plus == 0 and edit_window_end_plus == 0:
+            sgrnas = sgrnas.drop(['edit_window_plus',
+                                'num_edits_plus',
+                                'specific_plus',
+                                'safety_region',
+                                'num_edits_safety',
+                                'additional_in_safety'])
+
+    else:
+        sgrnas = pl.DataFrame()
+        sam_df = pl.DataFrame()
+
+    # non-editing guides found
+    if guide_output_ne:
+        sgrnas_ne = pl.DataFrame({"variant":  "NA_for_non_editing_guides",
+                                "base_editor": be_output_ne,
+                                "guide": guide_output_ne,
+                                "guide_chrom": chroms_output_ne,
+                                "guide_start": guide_starts_output_ne,
+                                "guide_end": guide_ends_output_ne,
+                                "guide_with_pam": guide_with_pam_output_ne,
+                                "edit_window": edit_window_output_ne,
+                                "edit_window_plus": edit_window_plus_output_ne,
+                                "safety_region": safety_region_output_ne,
+                                "ne_plus": ne_plus_output_ne,
+                                "strand": direction_output_ne})
+
+        if blast:
+
+            sgrnas_ne = sgrnas_ne.with_row_index('index')
+            guides_ne_blast = sgrnas_ne.select('index', 'guide')
+            blast_results_ne = blast_guides.guide_blast(guides_ne_blast,
+                                                        guidelength,
+                                                        ref_genome,
+                                                        'genes',
+                                                        no_contigs)
+            sgrnas_ne = sgrnas_ne.join(blast_results_ne, on='index', how='left')
+            sgrnas_ne =sgrnas_ne.drop('index')
+
+        sgrnas_ne = sgrnas_ne.unique().sort(by=sgrnas_ne.columns)
+
+        sam_ne_df = sgrnas_ne.select(
+            ['variant', 'guide', 'guide_chrom', 'guide_start', 'strand']
+            ) # will always be exploded, but maybe unify somehow different?
+
         sam_ne_df = sam_ne_df.with_columns(
             pl.col('variant').alias('QNAME'),
             pl.when(pl.col("strand") == '+').then(0).otherwise(
@@ -618,59 +635,61 @@ def saturate_region(ref_genome,
                     'QUAL'
                     ])
 
-        sgrnas = sgrnas.drop(['off_target_bases'])
-
         sgrnas_ne = sgrnas_ne.drop(['variant'])
 
         if edit_window_start_plus == 0 and edit_window_end_plus == 0:
-            sgrnas = sgrnas.drop(['edit_window_plus',
-                                'num_edits_plus',
-                                'specific_plus',
-                                'safety_region',
-                                'num_edits_safety',
-                                'additional_in_safety'])
-
             sgrnas_ne = sgrnas_ne.drop(['edit_window_plus',
                                         'safety_region',
                                         'ne_plus'])
 
     else:
-        sgrnas = pl.DataFrame()
         sgrnas_ne = pl.DataFrame()
-        sam_df = pl.DataFrame()
         sam_ne_df = pl.DataFrame()
 
     return (sgrnas, sgrnas_ne, sam_df, sam_ne_df, sequences_not_found)
 
 
 def output_sgrnas(sgrnas, sgrnas_ne, output_file):
-    sgrnas.write_csv(output_file + ".tsv", separator='\t')
-    sgrnas_ne.write_csv(output_file + "_ne.tsv", separator='\t')
+    if not sgrnas.is_empty():
+        sgrnas.write_csv(output_file + ".tsv", separator='\t')
+    else:
+        print("No editing guides could be identified: No such TSV file will be written.")
+
+    if not sgrnas_ne.is_empty():
+        sgrnas_ne.write_csv(output_file + "_ne.tsv", separator='\t')
+    else:
+        print("No non-editing guides could be identified: No such TSV file will be written.")
 
 
 def output_guides_sam(sam_df, sam_ne_df, output_file, ref_genome):
 
-    sam_df.write_csv(output_file + ".sam", separator='\t', include_header=False)
-    pysam.view(output_file + ".sam",
-               '-b',
-               '-o', output_file + "_unsorted.bam",
-               '-t', ref_genome + '.fai',
-               catch_stdout=False)
-    os.remove(output_file + ".sam")
-    pysam.sort('-o', output_file + ".bam", output_file + "_unsorted.bam") # should already be sorted, but this acts as a failsafe
-    os.remove(output_file + "_unsorted.bam")
-    pysam.index(output_file + ".bam")
+    if not sam_df.is_empty():
+        sam_df.write_csv(output_file + ".sam", separator='\t', include_header=False)
+        pysam.view(output_file + ".sam",
+                '-b',
+                '-o', output_file + "_unsorted.bam",
+                '-t', ref_genome + '.fai',
+                catch_stdout=False)
+        os.remove(output_file + ".sam")
+        pysam.sort('-o', output_file + ".bam", output_file + "_unsorted.bam") # should already be sorted, but this acts as a failsafe
+        os.remove(output_file + "_unsorted.bam")
+        pysam.index(output_file + ".bam")
+    else:
+        print("No editing guides could be identified: No such BAM file will be written.")
 
-    sam_ne_df.write_csv(output_file + "_ne.sam", separator='\t', include_header=False)
-    pysam.view(output_file + "_ne.sam",
-               '-b',
-               '-o', output_file + "_ne_unsorted.bam",
-               '-t', ref_genome + '.fai',
-               catch_stdout=False)
-    os.remove(output_file + "_ne.sam")
-    pysam.sort('-o', output_file + "_ne.bam", output_file + "_ne_unsorted.bam") # should already be sorted, but this acts as a failsafe
-    os.remove(output_file + "_ne_unsorted.bam")
-    pysam.index(output_file + "_ne.bam")
+    if not sam_ne_df.is_empty():
+        sam_ne_df.write_csv(output_file + "_ne.sam", separator='\t', include_header=False)
+        pysam.view(output_file + "_ne.sam",
+                '-b',
+                '-o', output_file + "_ne_unsorted.bam",
+                '-t', ref_genome + '.fai',
+                catch_stdout=False)
+        os.remove(output_file + "_ne.sam")
+        pysam.sort('-o', output_file + "_ne.bam", output_file + "_ne_unsorted.bam") # should already be sorted, but this acts as a failsafe
+        os.remove(output_file + "_ne_unsorted.bam")
+        pysam.index(output_file + "_ne.bam")
+    else:
+        print("No non-editing guides could be identified: No such BAM file will be written.")
 
 
 if __name__ == "__main__":
