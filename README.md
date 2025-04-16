@@ -10,7 +10,7 @@ To run BEscreen, you need to run the script `bescreen.py` in a Python environmen
 To install one of these environments run:
 ```
 # install a conda distribution like mini-forge
-git clone git@github.com:bepeople/bescreen.git
+git clone https://github.com/ostendorflab/bescreen.git
 cd bescreen
 # Install with conda:
 conda env create -f envs/environment.yaml # replace environment.yaml with one of the above mentioned files
@@ -24,7 +24,7 @@ conda activate bescreen # replace bescreen with one of the above mentioned envir
 ### Reference files
 You also need to download (and install) some reference files from Ensembl's and NCBI's FTP servers. BEscreen was tested with the Ensembl release 112, but others should also work. If you are working with macOS or Linux, you can use from of the download scripts (`download_(species)_(wget/curl).sh`) to directly download the necessary files to the default locations. Most Linux distributions provide `wget` per default and macOS provides `curl`. So, if you don't have the other tool installed, simply use the `wget` scripts on Linux and the `curl` scripts on macOS. You need to execute the scripts in the root folder of the repository:
 ```
-git clone git@github.com:bepeople/bescreen.git # if not already done
+git clone https://github.com/ostendorflab/bescreen.git # if not already done
 cd bescreen # if not already done
 ./download_(species)_(wget/curl).sh
 ```
@@ -90,7 +90,7 @@ To use rsIDs from dbSNP as input you need to build a local dbSNP database. To do
 
 If you have done so use the the script `(bescreen/)bescreen/dbsnp_sqlite3.py` to create the local database by executing this command in the download folder using your environment:
 ```
-git clone git@github.com:bepeople/bescreen.git # if not already done
+git clone https://github.com/ostendorflab/bescreen.git # if not already done
 cd bescreen # if not already done
 python dbsnp_sqlite3.py --dbsnp-vcf resources/dbSNP/snp/organisms/human_9606/VCF/00-All.vcf.gz --rsid-db resources/dbSNP/snp/organisms/human_9606/VCF/rsid.db # adjust the paths according to your needs
 ```
