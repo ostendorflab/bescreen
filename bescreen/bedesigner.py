@@ -154,6 +154,7 @@ def design_bes(annotation_file,
     all_codonss_edited = []
     all_aass = []
     all_aass_edited = []
+    all_aa_positionss = []
     all_splice_sites_included = []
     all_synonymouss = []
 
@@ -461,6 +462,7 @@ def design_bes(annotation_file,
             codonsss_edited = []
             aasss = []
             aasss_edited = []
+            aa_positionsss = []
             splice_sitess_included = []
             synonymousss = []
 
@@ -541,6 +543,7 @@ def design_bes(annotation_file,
                         codonss_edited = []
                         aass = []
                         aass_edited = []
+                        aa_positionss = []
                         splice_sites_included = []
                         synonymouss = []
 
@@ -558,6 +561,7 @@ def design_bes(annotation_file,
                             codons_edited = []
                             aas = []
                             aas_edited = []
+                            aa_positions = []
                             includes_splice_site = False
                             synonymous = False
 
@@ -599,6 +603,16 @@ def design_bes(annotation_file,
                                             synonymous = True
                                         else:
                                             synonymous = False
+
+                                    if row['Strand'] == "+":
+                                        nt_position = row['transcript_length_before'] + ((edit + 1) - row['Start'])
+                                        aa_position = -(-nt_position // 3)
+                                        aa_position = str(aa_position)
+
+                                    elif row['Strand'] == "-":
+                                        nt_position = row['transcript_length_before'] + (row['End'] - (edit)) # (row['End'] - (edit + 1))?
+                                        aa_position = -(-nt_position // 3)
+                                        aa_position = str(aa_position)
 
                                 elif (row["Start"] - 2) <= edit < (row["End"] + 2):
                                     includes_splice_site = True
@@ -651,11 +665,15 @@ def design_bes(annotation_file,
                                                 aa_edited = "3prime_UTR"
                                                 includes_splice_site = False
 
+                                    aa_position = aa
+
                                 else:
                                     codon = "not_in_CDS"
                                     codon_edited = "not_in_CDS"
                                     aa = "not_in_CDS"
                                     aa_edited = "not_in_CDS"
+
+                                    aa_position = aa
 
                                 if edit != position:
                                     codon = codon.lower()
@@ -669,6 +687,8 @@ def design_bes(annotation_file,
                                 aas.append(aa)
                                 aas_edited.append(aa_edited)
 
+                                aa_positions.append(aa_position)
+
                             # lists per guide for manual annotation
                             gene_symbols.append(gene_symbol) # mostly only one, but could be multiple, if CDSs overlapp
                             transcript_symbols.append(transcript_symbol) # multiple, categorized by according gene_symbol
@@ -679,6 +699,7 @@ def design_bes(annotation_file,
                             codonss_edited.append(codons_edited) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
                             aass.append(aas) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
                             aass_edited.append(aas_edited) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
+                            aa_positionss.append(aa_positions)
                             splice_sites_included.append(str(includes_splice_site)) # str() is necessary for collapsing later, find a better solution
                             synonymouss.append(str(synonymous)) # str() is necessary for collapsing later, find a better solution
 
@@ -692,6 +713,7 @@ def design_bes(annotation_file,
                         codonss_edited = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
                         aass = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
                         aass_edited = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
+                        aa_positionss = [['no_CDS_found']]
                         splice_sites_included = ['no_CDS_found'] # [str(False)]
                         synonymouss = ['no_CDS_found'] # [str(False)]
 
@@ -715,11 +737,12 @@ def design_bes(annotation_file,
                                                 'codonsss_edited': codonss_edited,
                                                 'aasss': aass,
                                                 'aasss_edited':aass_edited,
+                                                'aa_positionsss': aa_positionss,
                                                 'splice_sitess_included': splice_sites_included,
                                                 'synonymousss': synonymouss})
 
                     # group everything except exon_numberss, transcript_symbolss, first_transcript_exonss, last_transcript_exonss; should or could this be extended
-                    annotations = annotations.group_by([col for col in annotations.columns if col not in ['exon_numberss', 'transcript_symbolss', 'first_transcript_exonss', 'last_transcript_exonss']], maintain_order=True).agg(pl.all())
+                    annotations = annotations.group_by([col for col in annotations.columns if col not in ['aa_positionsss', 'exon_numberss', 'transcript_symbolss', 'first_transcript_exonss', 'last_transcript_exonss']], maintain_order=True).agg(pl.all())
 
                     aas_for_filtering = []
                     for aa_list in annotations['aasss'].to_list():
@@ -793,6 +816,7 @@ def design_bes(annotation_file,
                         codonsss_edited.append(annotations['codonsss_edited'].to_list()) # consider different join character
                         aasss.append(annotations['aasss'].to_list()) # consider different join character
                         aasss_edited.append(annotations['aasss_edited'].to_list()) # consider different join character
+                        aa_positionsss.append(annotations['aa_positionsss'].to_list())
                         splice_sitess_included.append(annotations['splice_sitess_included'].to_list())
                         synonymousss.append(annotations['synonymousss'].to_list())
 
@@ -839,6 +863,7 @@ def design_bes(annotation_file,
                 codonsss_edited.append([["no_guides_found"]])
                 aasss.append([["no_guides_found"]])
                 aasss_edited.append([["no_guides_found"]])
+                aa_positionsss.append([[["no_guides_found"]]])
                 splice_sitess_included.append(["no_guides_found"])
                 edit_strings.append("no_guides_found")
                 edit_pos_strings.append("no_guides_found")
@@ -895,6 +920,7 @@ def design_bes(annotation_file,
             all_codonss_edited.append(codonsss_edited) # list
             all_aass.append(aasss) # list
             all_aass_edited.append(aasss_edited) # list
+            all_aa_positionss.append(aa_positionsss) # list
             all_splice_sites_included.append(splice_sitess_included)
             all_synonymouss.append(synonymousss)
             all_guide_starts.append(possible_starts)
@@ -942,6 +968,7 @@ def design_bes(annotation_file,
             all_codonss_edited.append([[["no_be_available"]]])
             all_aass.append([[["no_be_available"]]])
             all_aass_edited.append([[["no_be_available"]]])
+            all_aa_positionss.append([[[["no_be_available"]]]])
             all_splice_sites_included.append([["no_be_available"]])
             all_synonymouss.append([["no_be_available"]])
             all_guide_starts.append(["no_be_available"])
@@ -971,6 +998,7 @@ def design_bes(annotation_file,
                            "strand": all_rev_com,
                            "codon_ref": all_codonss,
                            "aa_ref": all_aass,
+                           "aa_pos": all_aa_positionss,
                            "codon_edit": all_codonss_edited,
                            "aa_edit": all_aass_edited,
                            "splice_site_included": all_splice_sites_included,
@@ -1103,6 +1131,8 @@ def design_bes(annotation_file,
     splice_sites_to_modify = ['splice_site_included',
                               'synonymous']
 
+    aa_pos_to_modify_very_first = ['aa_pos']
+
     transcript_cols_to_modify_first = ['exon_number',
                                        'transcript',
                                        'first_transcript_exon',
@@ -1128,6 +1158,7 @@ def design_bes(annotation_file,
     columns_to_modify_last = [col for col in sgrnas.columns if col not in non_list_columns]
 
     sgrnas = sgrnas.with_columns(
+        pl.col(aa_pos_to_modify_very_first).list.eval(pl.element().list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("~")).list.join("^")),
         pl.col(symbols_to_contract).list.eval(pl.element().list.unique(maintain_order=True).list.join("?")), # make nested symbol list unique and flatten; join with '?', if multiple symbols appear
         pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.eval(pl.element().list.join("~")).list.join("^")),
         pl.col(variant_cols_to_modify_first).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("^")), # this separator should be something different (the first one; old comment?)

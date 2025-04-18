@@ -114,6 +114,7 @@ def saturate_bes(annotation_file,
     synonymous_output = []
     codon_ref = []
     aa_ref = []
+    aa_pos = []
     codon_edit = []
     aa_edit = []
     splice_site_included = []
@@ -235,6 +236,7 @@ def saturate_bes(annotation_file,
                         codons_edited = [] # reset variant list for sliding window
                         aas = [] # reset variant list for sliding window
                         aas_edited = [] # reset variant list for sliding window
+                        aa_positions = [] # reset variant list for sliding window
                         # includes_splice_site = "not_tested" # also check for splice-sites even, if not explicitely added
                         # if splice_sites:
                         #     includes_splice_site = False
@@ -295,6 +297,18 @@ def saturate_bes(annotation_file,
                                         codons_edited.append(codon_edited)
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
+
+                                        if row['Strand'] == "+":
+                                            nt_position = row['transcript_length_before'] + ((pos + 1) - row['Start'])
+                                            aa_position = -(-nt_position // 3)
+                                            aa_position = str(aa_position)
+
+                                        elif row['Strand'] == "-":
+                                            nt_position = row['transcript_length_before'] + (row['End'] - (pos)) # (row['End'] - (pos + 1))?
+                                            aa_position = -(-nt_position // 3)
+                                            aa_position = str(aa_position)
+
+                                        aa_positions.append(aa_position)
 
                                         if len(indices_edit) == 1: # only 1 editable base in editing window
                                             # specific = True # will be analyzed by analyze_guide()
@@ -368,6 +382,8 @@ def saturate_bes(annotation_file,
                                             aas.append(aa)
                                             aas_edited.append(aa_edited)
 
+                                            aa_positions.append(aa)
+
                                             # if len(indices_edit) == 1: # only 1 editable base in editing window # whole block not necessary anymore since using analyze_guide(); replaced with synonymous = False
                                             #     # specific = True # will be analyzed by analyze_guide()
                                             #     synonymous = False
@@ -420,6 +436,8 @@ def saturate_bes(annotation_file,
                                         codons_edited.append(codon_edited)
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
+
+                                        aa_positions.append(aa)
 
                                 else: # failsafe; can be removed
                                     raise Exception
@@ -519,6 +537,7 @@ def saturate_bes(annotation_file,
                                 direction_output.append('+') # forward
                                 codon_ref.append(codons) # list
                                 aa_ref.append(aas) # list
+                                aa_pos.append(aa_positions)
                                 codon_edit.append(codons_edited) # list
                                 aa_edit.append(aas_edited) # list
                                 splice_site_included.append(includes_splice_site)
@@ -588,6 +607,7 @@ def saturate_bes(annotation_file,
                         codons_edited = [] # reset variant list for sliding window
                         aas = [] # reset variant list for sliding window
                         aas_edited = [] # reset variant list for sliding window
+                        aa_positions = [] # reset variant list for sliding window
                         # includes_splice_site = "not_tested" # also check for splice-sites even, if not explicitely added
                         # if splice_sites:
                         #     includes_splice_site = False
@@ -648,6 +668,18 @@ def saturate_bes(annotation_file,
                                         codons_edited.append(codon_edited)
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
+
+                                        if row['Strand'] == "+":
+                                            nt_position = row['transcript_length_before'] + ((pos + 1) - row['Start'])
+                                            aa_position = -(-nt_position // 3)
+                                            aa_position = str(aa_position)
+
+                                        elif row['Strand'] == "-":
+                                            nt_position = row['transcript_length_before'] + (row['End'] - (pos)) # (row['End'] - (pos + 1))?
+                                            aa_position = -(-nt_position // 3)
+                                            aa_position = str(aa_position)
+
+                                        aa_positions.append(aa_position)
 
                                         if len(indices_edit) == 1: # only 1 editable base in editing window
                                             # specific = True # will be analyzed by analyze_guide()
@@ -721,6 +753,8 @@ def saturate_bes(annotation_file,
                                             aas.append(aa)
                                             aas_edited.append(aa_edited)
 
+                                            aa_positions.append(aa)
+
                                             # if len(indices_edit) == 1: # only 1 editable base in editing window # whole block not necessary anymore since using analyze_guide(); replaced with synonymous = False
                                             #     # specific = True # will be analyzed by analyze_guide()
                                             #     synonymous = False
@@ -773,6 +807,8 @@ def saturate_bes(annotation_file,
                                         codons_edited.append(codon_edited)
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
+
+                                        aa_positions.append(aa)
 
                                 else: # failsafe; can be removed
                                     raise Exception
@@ -875,6 +911,7 @@ def saturate_bes(annotation_file,
                                 direction_output.append('-') # reverse
                                 codon_ref.append(codons) # list
                                 aa_ref.append(aas) # list
+                                aa_pos.append(aa_positions)
                                 codon_edit.append(codons_edited) # list
                                 aa_edit.append(aas_edited) # list
                                 splice_site_included.append(includes_splice_site)
@@ -928,6 +965,8 @@ def saturate_bes(annotation_file,
     #                   "codon_edit",
     #                   "aa_edit"]
 
+    aa_pos_to_modify_very_first = ['aa_pos']
+
     transcript_cols_to_modify_first = ['exon_number',
                                     'transcript',
                                     'first_transcript_exon',
@@ -975,6 +1014,7 @@ def saturate_bes(annotation_file,
                             "strand": direction_output,
                             "codon_ref": codon_ref,
                             "aa_ref": aa_ref,
+                            "aa_pos": aa_pos,
                             "codon_edit": codon_edit,
                             "aa_edit": aa_edit,
                             "splice_site_included": splice_site_included,
@@ -1005,6 +1045,7 @@ def saturate_bes(annotation_file,
         sgrnas = sgrnas.with_columns(variant = sgrnas['variant'])
         sgrnas = sgrnas.with_columns(codon_ref = sgrnas['codon_ref'])
         sgrnas = sgrnas.with_columns(aa_ref = sgrnas['aa_ref'])
+        sgrnas = sgrnas.with_columns(aa_pos = sgrnas['aa_pos'])
         sgrnas = sgrnas.with_columns(codon_edit = sgrnas['codon_edit'])
         sgrnas = sgrnas.with_columns(aa_edit = sgrnas['aa_edit'])
         # sgrnas = sgrnas.with_columns(variant = sgrnas['variant'].list.join('&'))
@@ -1012,7 +1053,8 @@ def saturate_bes(annotation_file,
         # sgrnas = sgrnas.with_columns(aa_ref = sgrnas['aa_ref'].list.join('&'))
         # sgrnas = sgrnas.with_columns(codon_edit = sgrnas['codon_edit'].list.join('&'))
         # sgrnas = sgrnas.with_columns(aa_edit = sgrnas['aa_edit'].list.join('&'))
-        sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in ['exon_number',
+        sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in ['aa_pos',
+                                                                               'exon_number',
                                                                             'transcript',
                                                                             'first_transcript_exon',
                                                                             'last_transcript_exon']],
@@ -1020,6 +1062,7 @@ def saturate_bes(annotation_file,
         sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in ['synonymous',
                                                                             'codon_ref',
                                                                             'aa_ref',
+                                                                            'aa_pos',
                                                                             'codon_edit',
                                                                             'aa_edit',
                                                                             'splice_site_included',
@@ -1114,6 +1157,7 @@ def saturate_bes(annotation_file,
 
         if aspect == 'exploded': # maybe also show off target edits in codons in small letters as for bedesigner
             sgrnas = sgrnas.with_columns(
+                pl.col(aa_pos_to_modify_very_first).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("~")).list.join("^"),
                 pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.join("~")).list.join("^"),
                 pl.col(variant_cols_to_modify_first).map_batches(lambda s:
                     s.to_frame()
@@ -1134,6 +1178,7 @@ def saturate_bes(annotation_file,
 
         elif aspect == 'collapsed':
             sgrnas = sgrnas.with_columns(
+                pl.col(aa_pos_to_modify_very_first).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("~")).list.join("^"),
                 pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.join("~")).list.join("^"),
                 pl.col(variant_cols_to_modify_first).list.eval(pl.element().list.join(";")).list.join("^"),
                 pl.col(variant_cols_to_modify_second).list.join(";"),
@@ -1230,6 +1275,7 @@ def saturate_bes(annotation_file,
                                 "strand": direction_output_ne,
                                 "codon_ref": "NA_for_non_editing_guides",
                                 "aa_ref": "NA_for_non_editing_guides",
+                                "aa_pos": "NA_for_non_editing_guides",
                                 "codon_edit": "NA_for_non_editing_guides",
                                 "aa_edit": "NA_for_non_editing_guides",
                                 "splice_site_included": "NA_for_non_editing_guides",
@@ -1257,12 +1303,12 @@ def saturate_bes(annotation_file,
         sgrnas_ne = sgrnas_ne.with_columns(last_transcript_exon = sgrnas_ne['last_transcript_exon'].cast(int).cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(synonymous = sgrnas_ne['synonymous'].cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(splice_site_included = sgrnas_ne['splice_site_included'].cast(str))
-        sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['exon_number',
+        sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['exon_number', # 'aa_pos' shouldn't be necessary here, since it's not set
                                                                                     'transcript',
                                                                                     'first_transcript_exon',
                                                                                     'last_transcript_exon']],
                                         maintain_order=True).agg(pl.all().str.join("~"))
-        sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['synonymous',
+        sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['synonymous', # 'aa_pos' shouldn't be necessary here, since it's not set
                                                                                     'codon_ref',
                                                                                     'aa_ref',
                                                                                     'codon_edit',
@@ -1344,6 +1390,7 @@ def saturate_bes(annotation_file,
                                     'synonymous',
                                     'codon_ref',
                                     'aa_ref',
+                                    'aa_pos',
                                     'codon_edit',
                                     'aa_edit',
                                     'splice_site_included',

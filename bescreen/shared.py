@@ -206,7 +206,19 @@ def gtf_to_parquet(gtf_path, parquet_path):
     cdss_with_stops_tsv['tag'] = np.where(cdss_with_stops_tsv.tag == 'MANE_Select', True, False)
     cdss_with_stops_tsv = cdss_with_stops_tsv.rename(columns={'tag':'MANE_Select'})
 
-    cdss_with_stops_tsv.to_parquet(parquet_path)
+    cdss_with_stops_tsv = pl.read_parquet(cdss_with_stops_tsv.to_parquet())
+
+    cdss_with_stops_tsv = cdss_with_stops_tsv.with_columns(
+        transcript_exon_length = pl.col("End") - pl.col("Start")
+    ).with_columns(
+        transcript_length = pl.col("transcript_exon_length").sum().over(pl.col("transcript_name"), order_by="exon_number")
+        ).with_columns(
+        transcript_length_cum = pl.col("transcript_exon_length").cum_sum().over(pl.col("transcript_name"), order_by="exon_number")
+        ).with_columns(
+        transcript_length_before = pl.col("transcript_length_cum") - pl.col("transcript_exon_length")
+        )
+
+    cdss_with_stops_tsv.write_parquet(parquet_path)
 
 
 def gtf_to_parquet_legacy(gtf_path, parquet_path):
