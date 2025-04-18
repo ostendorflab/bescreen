@@ -258,6 +258,7 @@ def saturate_bes(annotation_file,
                         # if splice_sites:
                         #     includes_splice_site = False
                         includes_splice_site = False
+                        synonymous = False
 
                         poss = [row["Start"] - flanklength_nonpamsided + index_edit - 2 if splice_sites else row["Start"] - flanklength_nonpamsided + index_edit for index_edit in indices_edit]
                         start = row["Start"] - 2 if splice_sites else row["Start"]
@@ -333,7 +334,7 @@ def saturate_bes(annotation_file,
                                             #     specific_plus = True
                                             # else:
                                             #     specific_plus = False
-                                            if aa == aa_edited:
+                                            if aa == aa_edited and aa != "codon_incomplete":
                                                 synonymous = True
                                             else:
                                                 synonymous = False
@@ -455,6 +456,7 @@ def saturate_bes(annotation_file,
                                         aas_edited.append(aa_edited)
 
                                         aa_positions.append(aa)
+                                        synonymous = False
 
                                 else: # failsafe; can be removed
                                     raise Exception
@@ -648,6 +650,7 @@ def saturate_bes(annotation_file,
                         # if splice_sites:
                         #     includes_splice_site = False
                         includes_splice_site = False
+                        synonymous = False
 
                         poss = [row["Start"] - flanklength_pamsided + index_edit - 2 if splice_sites else row["Start"] - flanklength_pamsided + index_edit for index_edit in indices_edit]
                         start = row["Start"] - 2 if splice_sites else row["Start"]
@@ -723,7 +726,7 @@ def saturate_bes(annotation_file,
                                             #     specific_plus = True
                                             # else:
                                             #     specific_plus = False
-                                            if aa == aa_edited:
+                                            if aa == aa_edited and aa != "codon_incomplete":
                                                 synonymous = True
                                             else:
                                                 synonymous = False
@@ -845,6 +848,7 @@ def saturate_bes(annotation_file,
                                         aas_edited.append(aa_edited)
 
                                         aa_positions.append(aa)
+                                        synonymous = False
 
                                 else: # failsafe; can be removed
                                     raise Exception
