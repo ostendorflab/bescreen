@@ -1,5 +1,5 @@
 import statistics
-from scipy.stats import norm
+# from scipy.stats import norm
 import os
 import polars as pl
 import pandas as pd

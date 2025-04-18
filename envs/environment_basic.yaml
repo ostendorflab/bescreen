@@ -8,5 +8,5 @@ dependencies:
   - pyarrow
   - pyfaidx
   - pyranges
-  - scipy
+  # - scipy
   - pysam

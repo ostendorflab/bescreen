@@ -9,6 +9,6 @@ dependencies:
   - pyfaidx
   - pyranges
   - ensembl-vep
-  - scipy
+  # - scipy
   - blast
   - pysam
