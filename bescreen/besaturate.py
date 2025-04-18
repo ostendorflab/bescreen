@@ -20,6 +20,7 @@ def saturate_bes(annotation_file,
                  edit_window_start_plus,
                  edit_window_end_plus,
                  splice_sites,
+                 mane_select_only,
                  write_parquet,
                  vep,
                  aspect,
@@ -70,6 +71,10 @@ def saturate_bes(annotation_file,
     parquet_file = shared.check_parquet(annotation_file, write_parquet)
 
     cdss = pl.read_parquet(parquet_file)
+
+    if mane_select_only:
+        cdss = cdss.filter(pl.col('MANE_Select'))
+
     cdss_gene = cdss.filter(pl.col('gene_name').is_in(gene_symbols_list))
     if cdss_gene.is_empty():
         if len(gene_symbols_list) == 1:

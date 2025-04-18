@@ -67,6 +67,8 @@ def arguments():
                         default=0, type=int)
     parser.add_argument('-d', '--aspect', help='Collapsed (default) or exploded aspect of the output',
                         choices=['collapsed', 'exploded'], default='collapsed', type=str)
+    parser.add_argument('-m', '--mane-select-only', help='Use only MANE select transcripts for searching and annotations. This will not find guides for non-MANE transcripts as input for variants and might lead to reduced guides for gene input.',
+                        action='store_true')
     parser.add_argument('-x', '--write-parquet', help='Force writing a new parquet file',
                         action='store_true')
     base_editor_presets = shared.get_be_presets_dict(os.path.join(bescreendir, 'base_editors/be_presets.tsv'))
@@ -154,6 +156,7 @@ def arguments():
     aspect = args.aspect
     edit_window_start_plus = args.window_start_plus
     edit_window_end_plus = args.window_end_plus
+    mane_select_only = args.mane_select_only
     write_parquet = args.write_parquet
     filter_synonymous = args.filter_synonymous
     filter_splice_site = args.filter_splice_site
@@ -242,6 +245,7 @@ def arguments():
             edit_window_start_plus,
             edit_window_end_plus,
             splice_sites,
+            mane_select_only,
             write_parquet,
             aspect,
             vep_flags,
@@ -352,6 +356,7 @@ if __name__ == "__main__":
     edit_window_start_plus_arg, \
     edit_window_end_plus_arg, \
     splice_sites_arg, \
+    mane_select_only_arg, \
     write_parquet_arg, \
     aspect_arg, \
     vep_flags_arg, \
@@ -390,6 +395,7 @@ if __name__ == "__main__":
                                                    edit_window_end_plus_arg,
                                                    allpossible_arg,
                                                    input_format_arg,
+                                                   mane_select_only_arg,
                                                    write_parquet_arg,
                                                    vep_arg,
                                                    aspect_arg,
@@ -433,6 +439,7 @@ if __name__ == "__main__":
                                                       edit_window_start_plus_arg,
                                                       edit_window_end_plus_arg,
                                                       splice_sites_arg,
+                                                      mane_select_only_arg,
                                                       write_parquet_arg,
                                                       vep_arg,
                                                       aspect_arg,

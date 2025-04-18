@@ -25,6 +25,7 @@ def design_bes(annotation_file,
                edit_window_end_plus,
                allpossible,
                input_format,
+               mane_select_only,
                write_parquet,
                vep,
                aspect,
@@ -67,6 +68,9 @@ def design_bes(annotation_file,
     parquet_file = shared.check_parquet(annotation_file, write_parquet)
 
     cdss = pl.read_parquet(parquet_file)
+
+    if mane_select_only:
+        cdss = cdss.filter(pl.col('MANE_Select'))
 
     if input_file:
 
