@@ -798,9 +798,9 @@ def design_bes(annotation_file,
                         #     consequence.append('complex')
 
                     consequence = []
-                    if "False" not in annotations['synonymousss'].to_list():
+                    if "True" in annotations['synonymousss'].to_list(): # list always only has 1 element
                         consequence.append('synonymous')
-                    if "False" not in annotations['splice_sitess_included'].to_list():
+                    if "True" in annotations['splice_sitess_included'].to_list(): # list always only has 1 element
                         consequence.append('splice_site')
                     if specific:
                         consequence.append('specific')
@@ -815,8 +815,8 @@ def design_bes(annotation_file,
                     if not consequence:
                         consequence.append('complex')
 
-                    if not ((filter_synonymous) and ("True" not in annotations['synonymousss'].to_list()) or
-                            (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or
+                    if not ((filter_synonymous) and ("True" not in annotations['synonymousss'].to_list()) or # list always only has 1 element
+                            (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or # list always only has 1 element
                             (filter_specific) and (not specific) or
                             (filter_missense) and (not guide_is_missense) or
                             (filter_nonsense) and (not guide_is_stopgain) or
