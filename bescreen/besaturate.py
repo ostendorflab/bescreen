@@ -127,6 +127,7 @@ def saturate_bes(annotation_file,
     edit_window_plus_output_strand = []
     specific_plus_output = []
     synonymous_output = []
+    consequence_output = []
     codon_ref = []
     aa_ref = []
     aa_pos = []
@@ -498,37 +499,52 @@ def saturate_bes(annotation_file,
                             guide_is_startlost = False
                             guide_is_stoplost = False
 
-                            # consequence = []
+                            for i, aa in enumerate(aas):
+                                aa_editied = aas_edited[i]
+                                if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
+                                    guide_is_missense = True
+                                    # consequence.append('missense')
+                                elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
+                                    guide_is_synonymous = True
+                                    # consequence.append('synonymous')
 
-                            if any_filter:
-                                for i, aa in enumerate(aas):
-                                    aa_editied = aas_edited[i]
-                                    if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
-                                        guide_is_missense = True
-                                        # consequence.append('missense')
-                                    elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
-                                        guide_is_synonymous = True
-                                        # consequence.append('synonymous')
+                                elif aa != 'Stop' and aa_editied == 'Stop':
+                                    guide_is_stopgain = True
+                                    # consequence.append('stopgain')
+                                elif aa == 'Stop' and aa_editied != 'Stop':
+                                    guide_is_stoplost = True
+                                    # consequence.append('stoplost')
+                                elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
+                                    guide_is_synonymous = True
+                                    # consequence.append('synonymous')
 
-                                    elif aa != 'Stop' and aa_editied == 'Stop':
-                                        guide_is_stopgain = True
-                                        # consequence.append('stopgain')
-                                    elif aa == 'Stop' and aa_editied != 'Stop':
-                                        guide_is_stoplost = True
-                                        # consequence.append('stoplost')
-                                    elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
-                                        guide_is_synonymous = True
-                                        # consequence.append('synonymous')
+                                elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                    guide_is_startlost = True
+                                    # consequence.append('startlost')
+                                elif aa == 'StartM' and aa_editied =='M': # can't happen
+                                    guide_is_synonymous = True
+                                    # consequence.append('synonymous')
 
-                                    elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
-                                        guide_is_startlost = True
-                                        # consequence.append('startlost')
-                                    elif aa == 'StartM' and aa_editied =='M': # can't happen
-                                        guide_is_synonymous = True
-                                        # consequence.append('synonymous')
+                                # else: # should not happen; only necessary, if using consequence list
+                                #     consequence.append('complex')
 
-                                    # else: # should not happen; only necessary, if using consequence list
-                                    #     consequence.append('unknown')
+                            consequence = []
+                            if synonymous:
+                                consequence.append('synonymous')
+                            if includes_splice_site:
+                                consequence.append('splice_site')
+                            if specific:
+                                consequence.append('specific')
+                            if guide_is_missense:
+                                consequence.append('missense')
+                            if guide_is_stopgain:
+                                consequence.append('stopgain')
+                            if guide_is_stoplost:
+                                consequence.append('stoplost')
+                            if guide_is_startlost:
+                                consequence.append('startlost')
+                            if not consequence:
+                                consequence.append('complex')
 
                             if not ((filter_synonymous) and (not synonymous) or
                                     (filter_splice_site) and (not includes_splice_site) or
@@ -553,6 +569,7 @@ def saturate_bes(annotation_file,
                                 edit_window_plus_output_strand.append(edit_window_plus_bases)
                                 specific_plus_output.append(specific_plus)
                                 synonymous_output.append(synonymous)
+                                consequence_output.append(consequence)
                                 direction_output.append('+') # forward
                                 codon_ref.append(codons) # list
                                 aa_ref.append(aas) # list
@@ -875,37 +892,52 @@ def saturate_bes(annotation_file,
                             guide_is_startlost = False
                             guide_is_stoplost = False
 
-                            # consequence = []
+                            for i, aa in enumerate(aas):
+                                aa_editied = aas_edited[i]
+                                if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
+                                    guide_is_missense = True
+                                    # consequence.append('missense')
+                                elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
+                                    guide_is_synonymous = True
+                                    # consequence.append('synonymous')
 
-                            if any_filter:
-                                for i, aa in enumerate(aas):
-                                    aa_editied = aas_edited[i]
-                                    if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
-                                        guide_is_missense = True
-                                        # consequence.append('missense')
-                                    elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
-                                        guide_is_synonymous = True
-                                        # consequence.append('synonymous')
+                                elif aa != 'Stop' and aa_editied == 'Stop':
+                                    guide_is_stopgain = True
+                                    # consequence.append('stopgain')
+                                elif aa == 'Stop' and aa_editied != 'Stop':
+                                    guide_is_stoplost = True
+                                    # consequence.append('stoplost')
+                                elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
+                                    guide_is_synonymous = True
+                                    # consequence.append('synonymous')
 
-                                    elif aa != 'Stop' and aa_editied == 'Stop':
-                                        guide_is_stopgain = True
-                                        # consequence.append('stopgain')
-                                    elif aa == 'Stop' and aa_editied != 'Stop':
-                                        guide_is_stoplost = True
-                                        # consequence.append('stoplost')
-                                    elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
-                                        guide_is_synonymous = True
-                                        # consequence.append('synonymous')
+                                elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                    guide_is_startlost = True
+                                    # consequence.append('startlost')
+                                elif aa == 'StartM' and aa_editied =='M': # can't happen
+                                    guide_is_synonymous = True
+                                    # consequence.append('synonymous')
 
-                                    elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
-                                        guide_is_startlost = True
-                                        # consequence.append('startlost')
-                                    elif aa == 'StartM' and aa_editied =='M': # can't happen
-                                        guide_is_synonymous = True
-                                        # consequence.append('synonymous')
+                                # else: # should not happen; only necessary, if using consequence list
+                                #     consequence.append('complex')
 
-                                    # else: # should not happen; only necessary, if using consequence list
-                                    #     consequence.append('unknown')
+                            consequence = []
+                            if synonymous:
+                                consequence.append('synonymous')
+                            if includes_splice_site:
+                                consequence.append('splice_site')
+                            if specific:
+                                consequence.append('specific')
+                            if guide_is_missense:
+                                consequence.append('missense')
+                            if guide_is_stopgain:
+                                consequence.append('stopgain')
+                            if guide_is_stoplost:
+                                consequence.append('stoplost')
+                            if guide_is_startlost:
+                                consequence.append('startlost')
+                            if not consequence:
+                                consequence.append('complex')
 
                             if not ((filter_synonymous) and (not synonymous) or
                                     (filter_splice_site) and (not includes_splice_site) or
@@ -930,6 +962,7 @@ def saturate_bes(annotation_file,
                                 edit_window_plus_output_strand.append(edit_window_plus_bases)
                                 specific_plus_output.append(specific_plus)
                                 synonymous_output.append(synonymous)
+                                consequence_output.append(consequence)
                                 direction_output.append('-') # reverse
                                 codon_ref.append(codons) # list
                                 aa_ref.append(aas) # list
@@ -1012,6 +1045,8 @@ def saturate_bes(annotation_file,
                                         'first_transcript_exon',
                                         'last_transcript_exon']
 
+    consequences_to_modify = ['consequence']
+
     # editing guides found
     if guide_output: # if no guide is found at all (very unlikely)
         sgrnas = pl.DataFrame({"variant": variant_output,
@@ -1033,6 +1068,7 @@ def saturate_bes(annotation_file,
                             "additional_in_safety": additional_in_safety_output,
                             "ne_plus": "NA_for_editing_guides",
                             "synonymous": synonymous_output,
+                            "consequence": consequence_output,
                             "strand": direction_output,
                             "codon_ref": codon_ref,
                             "aa_ref": aa_ref,
@@ -1159,7 +1195,8 @@ def saturate_bes(annotation_file,
                     .select(pl.last())
                     .to_series() # this transposes the columns in variant_cols_to_modify_first
                     .list.eval(pl.element().list.join("^"))),
-                pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first]).list.join("^")
+                pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first]).list.join("^"),
+                pl.col(consequences_to_modify).list.join("&")
             ).explode(variant_cols_to_modify_second + variant_cols_to_modify_first)
 
         elif aspect == 'collapsed':
@@ -1168,7 +1205,8 @@ def saturate_bes(annotation_file,
                 pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.join("~")).list.join("^"),
                 pl.col(variant_cols_to_modify_first).list.eval(pl.element().list.join(";")).list.join("^"),
                 pl.col(variant_cols_to_modify_second).list.join(";"),
-                pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first]).list.join("^")
+                pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first]).list.join("^"),
+                pl.col(consequences_to_modify).list.join("&")
             )
 
         sgrnas = sgrnas.unique().sort(by=sgrnas.columns)
@@ -1259,6 +1297,7 @@ def saturate_bes(annotation_file,
                                 "additional_in_safety": "NA_for_non_editing_guides",
                                 "ne_plus": ne_plus_output_ne,
                                 "synonymous": "NA_for_non_editing_guides",
+                                "consequence": "NA_for_non_editing_guides",
                                 "strand": direction_output_ne,
                                 "codon_ref": "NA_for_non_editing_guides",
                                 "aa_ref": "NA_for_non_editing_guides",
@@ -1375,6 +1414,7 @@ def saturate_bes(annotation_file,
                                     'num_edits_safety',
                                     'additional_in_safety',
                                     'synonymous',
+                                    'consequence',
                                     'codon_ref',
                                     'aa_ref',
                                     'aa_pos',
