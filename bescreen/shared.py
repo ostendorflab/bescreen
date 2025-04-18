@@ -12,16 +12,17 @@ def qc_precalc(edit_window_start,
 
     edit_window_poss = range(edit_window_start, edit_window_end+1)
     median_edit_window = statistics.median(edit_window_poss)
-    max_distance_edit_window = max(median_edit_window-edit_window_start, edit_window_end-median_edit_window) # should always be symetrical
+    # max_distance_edit_window = max(median_edit_window-edit_window_start, edit_window_end-median_edit_window) # should always be symetrical
 
-    twosd_quality = max_distance_edit_window
-    onesd_quality = twosd_quality / 2
+    # twosd_quality = max_distance_edit_window
+    # onesd_quality = twosd_quality / 2
 
     # quality_dict for edit window
     distance_median_dict = dict(zip(edit_window_poss, [abs(possible_edit_pos-median_edit_window) for possible_edit_pos in edit_window_poss]))
-    quality_scores_dict = dict(zip(edit_window_poss, norm.pdf(edit_window_poss, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))))
+    # quality_scores_dict = dict(zip(edit_window_poss, norm.pdf(edit_window_poss, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))))
 
-    return (distance_median_dict, quality_scores_dict)
+    # return (distance_median_dict, quality_scores_dict)
+    return distance_median_dict
 
 
 def analyze_guide(guide,
@@ -31,8 +32,9 @@ def analyze_guide(guide,
                   edit_window_plus_end,
                   editable_base,
                   position_variant,
-                  distance_median_dict,
-                  quality_scores_dict):
+                  distance_median_dict):
+                #   distance_median_dict,
+                #   quality_scores_dict):
 
     edit_window = guide[edit_window_start-1:edit_window_end]
     num_edits = edit_window.count(editable_base)
@@ -102,23 +104,23 @@ def analyze_guide(guide,
     # distance_median_variant = [abs(edit_pos-median_edit_window) for edit_pos in variant_edits_pos]
     distance_median_variant = [distance_median_dict[edit_pos] for edit_pos in variant_edits_pos]
     # quality_scores_variant = norm.pdf(variant_edits_pos, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))
-    quality_scores_variant = [quality_scores_dict[edit_pos] for edit_pos in variant_edits_pos]
+    # quality_scores_variant = [quality_scores_dict[edit_pos] for edit_pos in variant_edits_pos]
 
     # # quality for all edits
     # distance_median_all = [abs(edit_pos-median_edit_window) for edit_pos in all_edits_pos]
     distance_median_all = [distance_median_dict[edit_pos] for edit_pos in all_edits_pos]
     # quality_scores_all = norm.pdf(all_edits_pos, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))
-    quality_scores_all = [quality_scores_dict[edit_pos] for edit_pos in all_edits_pos]
+    # quality_scores_all = [quality_scores_dict[edit_pos] for edit_pos in all_edits_pos]
 
     distance_median_variant = [str(number) for number in distance_median_variant]
-    quality_scores_variant = [str(round(float(number), 2)) for number in quality_scores_variant]
+    # quality_scores_variant = [str(round(float(number), 2)) for number in quality_scores_variant]
     distance_median_all = [str(number) for number in distance_median_all]
-    quality_scores_all = [str(round(float(number), 2)) for number in quality_scores_all]
+    # quality_scores_all = [str(round(float(number), 2)) for number in quality_scores_all]
 
     distance_median_variant = ",".join(distance_median_variant)
-    quality_scores_variant = ",".join(quality_scores_variant)
+    # quality_scores_variant = ",".join(quality_scores_variant)
     distance_median_all = ",".join(distance_median_all)
-    quality_scores_all = ",".join(quality_scores_all)
+    # quality_scores_all = ",".join(quality_scores_all)
 
     return (edit_window,
             num_edits,
@@ -133,9 +135,10 @@ def analyze_guide(guide,
             string_edit_poss,
             specificty,
             distance_median_variant,
-            quality_scores_variant,
-            distance_median_all,
-            quality_scores_all)
+            # quality_scores_variant,
+            distance_median_all)
+            # distance_median_all,
+            # quality_scores_all)
 
 
 def revcom(string):

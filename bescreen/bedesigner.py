@@ -144,9 +144,9 @@ def design_bes(annotation_file,
     all_additional_in_safety = []
     all_specificity = []
     all_distance_median_variant = []
-    all_quality_scores_variant = []
+    # all_quality_scores_variant = []
     all_distance_median_all = []
-    all_quality_scores_all = []
+    # all_quality_scores_all = []
 
     # final lists for manual annotation
     all_gene_symbols = []
@@ -217,7 +217,8 @@ def design_bes(annotation_file,
         variant_list += tmutvars # readd the transformed transcript mutations
 
     # precalculation of quality scores for positions in editing window
-    distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+    # distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+    distance_median_dict = shared.qc_precalc(edit_window_start, edit_window_end)
 
     # only need to do this once
     non_stop_aas = list(set([x for x in shared.codon_sun_one_letter.values() if x != 'Stop']))
@@ -452,9 +453,9 @@ def design_bes(annotation_file,
             additional_in_safetys = []
             specificitys = []
             distance_median_variants = []
-            quality_scores_variants = []
+            # quality_scores_variants = []
             distance_median_alls = []
-            quality_scores_alls = []
+            # quality_scores_alls = []
 
             # lists per variant for manual annotation
             gene_symbolss = []
@@ -504,17 +505,20 @@ def design_bes(annotation_file,
                     edit_pos_string, \
                     specificity, \
                     distance_median_variant, \
-                    quality_scores_variant, \
-                    distance_median_all, \
-                    quality_scores_all = shared.analyze_guide(possible_guide,
+                    distance_median_all = shared.analyze_guide(possible_guide,
                                                               position_edit_window_start,
                                                               position_edit_window_end,
                                                               edit_window_start_plus,
                                                               edit_window_end_plus,
                                                               target_base,
                                                               variant_position,
-                                                              distance_median_dict,
-                                                              quality_scores_dict)
+                                                              distance_median_dict)
+                    # the following lines have been removed from the statement above:
+                    # quality_scores_variant, \
+                    # distance_median_all, \
+                    # quality_scores_all = shared.analyze_guide(possible_guide,
+                                                            #   distance_median_dict,
+                                                            #   quality_scores_dict)
 
                     edit_string_an = edit_string
                     if rev_com:
@@ -838,9 +842,9 @@ def design_bes(annotation_file,
                         edit_pos_strings.append(edit_pos_string)
                         specificitys.append(str(specificity)) # str() is necessary for collapsing later, find a better solution
                         distance_median_variants.append(distance_median_variant)
-                        quality_scores_variants.append(quality_scores_variant)
+                        # quality_scores_variants.append(quality_scores_variant)
                         distance_median_alls.append(distance_median_all)
-                        quality_scores_alls.append(quality_scores_all)
+                        # quality_scores_alls.append(quality_scores_all)
 
                 # decreasing variant position for next loop; is there a more direct way? This seems unintuitive
                 variant_position -= 1
@@ -873,9 +877,9 @@ def design_bes(annotation_file,
                 edit_pos_strings.append("no_guides_found")
                 specificitys.append("no_guides_found")
                 distance_median_variants.append("no_guides_found")
-                quality_scores_variants.append("no_guides_found")
+                # quality_scores_variants.append("no_guides_found")
                 distance_median_alls.append("no_guides_found")
-                quality_scores_alls.append("no_guides_found")
+                # quality_scores_alls.append("no_guides_found")
                 transcript_symbolss.append([["no_guides_found"]])
                 exon_numberss.append([["no_guides_found"]])
                 first_transcript_exonss.append([["no_guides_found"]])
@@ -912,9 +916,9 @@ def design_bes(annotation_file,
             all_additional_in_safety.append(additional_in_safetys)
             all_specificity.append(specificitys) # list
             all_distance_median_variant.append(distance_median_variants) # list
-            all_quality_scores_variant.append(quality_scores_variants) # list
+            # all_quality_scores_variant.append(quality_scores_variants) # list
             all_distance_median_all.append(distance_median_alls) # list
-            all_quality_scores_all.append(quality_scores_alls) # list
+            # all_quality_scores_all.append(quality_scores_alls) # list
             all_gene_symbols.append(gene_symbolss) # list
             all_transcript_symbols.append(transcript_symbolss) # list
             all_exon_numbers.append(exon_numberss) # list
@@ -960,9 +964,9 @@ def design_bes(annotation_file,
             all_additional_in_safety.append(["no_be_available"])
             all_specificity.append(["no_be_available"])
             all_distance_median_variant.append(["no_be_available"])
-            all_quality_scores_variant.append(["no_be_available"])
+            # all_quality_scores_variant.append(["no_be_available"])
             all_distance_median_all.append(["no_be_available"])
-            all_quality_scores_all.append(["no_be_available"])
+            # all_quality_scores_all.append(["no_be_available"])
             all_gene_symbols.append([["no_be_available"]])
             all_transcript_symbols.append([[["no_be_available"]]])
             all_exon_numbers.append([[["no_be_available"]]])
@@ -1012,9 +1016,9 @@ def design_bes(annotation_file,
                            "edited_positions": all_edit_pos_strings,
                            "specificity": all_specificity,
                            "distance_median_variant": all_distance_median_variant,
-                           "efficiency_scores_variant": all_quality_scores_variant,
+                        #    "efficiency_scores_variant": all_quality_scores_variant,
                            "distance_median_all": all_distance_median_all,
-                           "efficiency_scores_all": all_quality_scores_all,
+                        #    "efficiency_scores_all": all_quality_scores_all,
                            "transcript": all_transcript_symbols,
                            "exon_number": all_exon_numbers,
                            "first_transcript_exon": all_first_transcript_exons,

@@ -134,7 +134,7 @@ def saturate_bes(annotation_file,
     edit_string_output = []
     edit_pos_string_output = []
     distance_median_all_output = []
-    quality_scores_all_output = []
+    # quality_scores_all_output = []
     guide_starts_output = []
     guide_ends_output = []
     chroms_output = []
@@ -162,7 +162,8 @@ def saturate_bes(annotation_file,
     chroms_output_ne = []
 
     # precalculation of quality scores for positions in editing window
-    distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+    # distance_median_dict, quality_scores_dict = shared.qc_precalc(edit_window_start, edit_window_end)
+    distance_median_dict = shared.qc_precalc(edit_window_start, edit_window_end)
 
     # only need to do this once
     non_stop_aas = list(set([x for x in shared.codon_sun_one_letter.values() if x != 'Stop']))
@@ -462,17 +463,20 @@ def saturate_bes(annotation_file,
                             edit_pos_string, \
                             specificity_unused, \
                             distance_median_variant_unused, \
-                            quality_scores_variant_unused, \
-                            distance_median_all, \
-                            quality_scores_all = shared.analyze_guide(possible_guide,
+                            distance_median_all = shared.analyze_guide(possible_guide,
                                                                       edit_window_start,
                                                                       edit_window_end,
                                                                       edit_window_start_plus,
                                                                       edit_window_end_plus,
                                                                       bes[be]['fwd']['REF'],
                                                                       None,
-                                                                      distance_median_dict,
-                                                                      quality_scores_dict) # _unused variables just for testing purposes; can be removed later
+                                                                      distance_median_dict)
+                            # the following lines have been removed from the statement above:
+                            # quality_scores_variant_unused, \
+                            # distance_median_all, \
+                            # quality_scores_all = shared.analyze_guide(possible_guide,
+                                                                    #   distance_median_dict,
+                                                                    #   quality_scores_dict) # _unused variables just for testing purposes; can be removed later
 
                             # if  (edit_window_bases_unused != edit_window_bases or
                             #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
@@ -557,7 +561,7 @@ def saturate_bes(annotation_file,
                                 edit_string_output.append(edit_string)
                                 edit_pos_string_output.append(edit_pos_string)
                                 distance_median_all_output.append(distance_median_all)
-                                quality_scores_all_output.append(quality_scores_all)
+                                # quality_scores_all_output.append(quality_scores_all)
                                 guide_starts_output.append(str(startpos_fwd + 1))
                                 guide_ends_output.append(str(startpos_fwd + guidelength + 1))
                                 chroms_output.append(str(chrom))
@@ -833,17 +837,20 @@ def saturate_bes(annotation_file,
                             edit_pos_string, \
                             specificity_unused, \
                             distance_median_variant_unused, \
-                            quality_scores_variant_unused, \
-                            distance_median_all, \
-                            quality_scores_all = shared.analyze_guide(shared.revcom(possible_guide),
+                            distance_median_all = shared.analyze_guide(shared.revcom(possible_guide),
                                                                       edit_window_start,
                                                                       edit_window_end,
                                                                       edit_window_start_plus,
                                                                       edit_window_end_plus,
                                                                       bes[be]['fwd']['REF'],
                                                                       None,
-                                                                      distance_median_dict,
-                                                                      quality_scores_dict) # _unused variables just for testing purposes; can be removed later
+                                                                      distance_median_dict)
+                            # the following lines have been removed from the statement above:
+                            # quality_scores_variant_unused, \
+                            # distance_median_all, \
+                            # quality_scores_all = shared.analyze_guide(shared.revcom(possible_guide),
+                                                                    #   distance_median_dict,
+                                                                    #   quality_scores_dict) # _unused variables just for testing purposes; can be removed later
 
                             # edit_window_bases_unused = shared.revcom(edit_window_bases_unused)
                             # edit_window_plus_bases_unused = shared.revcom(edit_window_plus_bases_unused)
@@ -931,7 +938,7 @@ def saturate_bes(annotation_file,
                                 edit_string_output.append(edit_string)
                                 edit_pos_string_output.append(edit_pos_string)
                                 distance_median_all_output.append(distance_median_all)
-                                quality_scores_all_output.append(quality_scores_all)
+                                # quality_scores_all_output.append(quality_scores_all)
                                 guide_starts_output.append(str(startpos_rev + len(pamsite) + 1))
                                 guide_ends_output.append(str(startpos_rev + guidelength + len(pamsite) + 1))
                                 chroms_output.append(str(chrom))
@@ -1029,9 +1036,9 @@ def saturate_bes(annotation_file,
                             "edited_positions": edit_pos_string_output,
                             "specificity":  "NA_for_genes",
                             "distance_median_variant":  "NA_for_genes",
-                            "efficiency_scores_variant":  "NA_for_genes",
+                            # "efficiency_scores_variant":  "NA_for_genes",
                             "distance_median_all": distance_median_all_output,
-                            "efficiency_scores_all": quality_scores_all_output,
+                            # "efficiency_scores_all": quality_scores_all_output,
                             "transcript": transcript_output,
                             "exon_number": exon_number_output,
                             "first_transcript_exon": first_transcript_exon_output,
@@ -1205,8 +1212,9 @@ def saturate_bes(annotation_file,
                             'ref_match',
                             'off_target_bases',
                             'specificity',
-                            'distance_median_variant',
-                            'efficiency_scores_variant'])
+                            'distance_median_variant'])
+                            # 'distance_median_variant',
+                            # 'efficiency_scores_variant'])
 
         if edit_window_start_plus == 0 and edit_window_end_plus == 0:
             sgrnas = sgrnas.drop(['edit_window_plus',
@@ -1254,9 +1262,9 @@ def saturate_bes(annotation_file,
                                 "edited_positions": "NA_for_non_editing_guides",
                                 "specificity": "NA_for_genes",
                                 "distance_median_variant": "NA_for_genes",
-                                "efficiency_scores_variant": "NA_for_genes",
+                                # "efficiency_scores_variant": "NA_for_genes",
                                 "distance_median_all": "NA_for_non_editing_guides",
-                                "efficiency_scores_all": "NA_for_non_editing_guides",
+                                # "efficiency_scores_all": "NA_for_non_editing_guides",
                                 "transcript": transcript_output_ne,
                                 "exon_number": exon_number_output_ne,
                                 "first_transcript_exon": first_transcript_exon_output_ne,
@@ -1369,9 +1377,10 @@ def saturate_bes(annotation_file,
                                     'edited_positions',
                                     'specificity',
                                     'distance_median_variant',
-                                    'efficiency_scores_variant',
-                                    'distance_median_all',
-                                    'efficiency_scores_all'])
+                                    'distance_median_all'])
+                                    # 'efficiency_scores_variant',
+                                    # 'distance_median_all',
+                                    # 'efficiency_scores_all'])
 
         if edit_window_start_plus == 0 and edit_window_end_plus == 0:
             sgrnas_ne = sgrnas_ne.drop(['edit_window_plus',
