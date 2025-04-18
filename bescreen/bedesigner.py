@@ -1045,7 +1045,7 @@ def design_bes(annotation_file,
         sgrnas = sgrnas.drop('index')
 
     # add vep annotations, if wanted
-    if vep: # needs to be adjusted to polars
+    if vep:
 
         variants_vep = pl.DataFrame({'variant': all_variant_real}).with_row_index('for_sorting_later')
         variants_non_vep = variants_vep.filter(pl.col('variant').is_in(['variant_is_improperly_formatted',
@@ -1074,10 +1074,9 @@ def design_bes(annotation_file,
                                                                      'non_existent_input_rsID',
                                                                      'genomic_position_not_numeric',
                                                                      'genomic_coordinates_not_found']))
-        variants_vep_sorted = shared.sort_variantsdf(variants_vep)
+        variants_vep_sorted = shared.sort_variantsdf(variants_vep) # new vep algorithm allows optimization here
         variants_vep_sorted_input = variants_vep_sorted['variant'].unique(maintain_order=True).to_list()
 
-        # vep_info, vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
         vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
                                                                species=vep_species,
                                                                assembly=vep_assembly,
@@ -1093,39 +1092,12 @@ def design_bes(annotation_file,
             )
         variants_vep_sorted = variants_vep_sorted.join(vep_annotations, left_on='variant', right_on='VEP_#Uploaded_variation', how='left')
 
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_chrom = vep_annotations['#CHROM'].cast(str)) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_pos = vep_annotations['POS'].cast(str)) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_id = vep_annotations['ID']) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_ref = vep_annotations['REF']) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_alt = vep_annotations['ALT']) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_qual = vep_annotations['QUAL']) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_filter = vep_annotations['FILTER']) # only usefull for testing
-        # variants_vep_sorted = variants_vep_sorted.with_columns(vep_annotations['INFO'].alias('vep_info')) # is this col names good?
+        variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted) # new vep algorithm allows optimization here
 
-        variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted)
-
-        # variants_non_vep = variants_non_vep.with_columns(vep_chrom = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(vep_pos = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(vep_id = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(vep_ref = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(vep_alt = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(vep_qual = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(vep_filter = pl.lit("not_suitable_for_VEP")) # only usefull for testing
-        # variants_non_vep = variants_non_vep.with_columns(pl.lit("not_suitable_for_VEP").alias('vep_info')) # is this col names good?
         for col in [col for col in vep_annotations.columns if col in variants_vep_resorted.columns]: # is there a better way?
             variants_non_vep = variants_non_vep.with_columns(pl.lit("not_suitable_for_VEP").alias(col))
 
         variants_vep_resorted = pl.concat([variants_vep_resorted, variants_non_vep]).sort('for_sorting_later').drop('for_sorting_later')
-
-        # the next lines need to be changed in every branch individually
-        # sgrnas = sgrnas.with_columns(vep_chrom = variants_vep_resorted['vep_chrom'].cast(str)) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(vep_pos = variants_vep_resorted['vep_pos'].cast(str)) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(vep_id = variants_vep_resorted['vep_id']) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(vep_ref = variants_vep_resorted['vep_ref']) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(vep_alt = variants_vep_resorted['vep_alt']) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(vep_qual = variants_vep_resorted['vep_qual']) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(vep_filter = variants_vep_resorted['vep_filter']) # only usefull for testing
-        # sgrnas = sgrnas.with_columns(variants_vep_resorted['vep_info'].alias(f'vep_info ({vep_info})')) # is this col names good?
 
         variants_vep_resorted = variants_vep_resorted.select(pl.exclude(["original_index", "variant"]))
         sgrnas = sgrnas.with_columns(variants_vep_resorted)
@@ -1156,7 +1128,6 @@ def design_bes(annotation_file,
                         'ref_match']
 
     if vep:
-        # non_list_columns += [f'vep_info ({vep_info})']
         non_list_columns += variants_vep_resorted.columns
 
     columns_to_modify_last = [col for col in sgrnas.columns if col not in non_list_columns]

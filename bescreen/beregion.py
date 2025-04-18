@@ -439,13 +439,13 @@ def saturate_region(ref_genome,
             sgrnas = sgrnas.join(blast_results, on='index', how='left')
             sgrnas = sgrnas.drop('index')
 
-        if vep: # better join by index
+        # add vep annotations, if wanted
+        if vep:
 
             variants_vep = sgrnas.select('variant').with_row_index('original_index').explode('variant')
-            variants_vep_sorted = shared.sort_variantsdf(variants_vep)
+            variants_vep_sorted = shared.sort_variantsdf(variants_vep) # new vep algorithm allows optimization here
             variants_vep_sorted_input = variants_vep_sorted['variant'].unique(maintain_order=True).to_list()
 
-            # vep_info, vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
             vep_annotations = get_vep.get_vep_annotation(variants_vep_sorted_input,
                                                                 species=vep_species,
                                                                 assembly=vep_assembly,
@@ -461,49 +461,13 @@ def saturate_region(ref_genome,
                 )
             variants_vep_sorted = variants_vep_sorted.join(vep_annotations, left_on='variant', right_on='VEP_#Uploaded_variation', how='left')
 
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_chrom = vep_annotations['#CHROM'].cast(str))
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_pos = vep_annotations['POS'].cast(str))
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_id = vep_annotations['ID'])
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_ref = vep_annotations['REF'])
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_alt = vep_annotations['ALT'])
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_qual = vep_annotations['QUAL'])
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_filter = vep_annotations['FILTER'])
-            # variants_vep_sorted = variants_vep_sorted.with_columns(vep_annotations['INFO'].alias('vep_info'))
-
-            variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted)
+            variants_vep_resorted = shared.resort_variantsdf(variants_vep_sorted) # new vep algorithm allows optimization here
 
             variants_vep_resorted = variants_vep_resorted.group_by('original_index', maintain_order=True).agg(pl.all())
-
-            # sgrnas = sgrnas.with_columns(vep_chrom = variants_vep_resorted['vep_chrom'])
-            # sgrnas = sgrnas.with_columns(vep_pos = variants_vep_resorted['vep_pos'])
-            # sgrnas = sgrnas.with_columns(vep_id = variants_vep_resorted['vep_id'])
-            # sgrnas = sgrnas.with_columns(vep_ref = variants_vep_resorted['vep_ref'])
-            # sgrnas = sgrnas.with_columns(vep_alt = variants_vep_resorted['vep_alt'])
-            # sgrnas = sgrnas.with_columns(vep_qual = variants_vep_resorted['vep_qual'])
-            # sgrnas = sgrnas.with_columns(vep_filter = variants_vep_resorted['vep_filter'])
-            # sgrnas = sgrnas.with_columns(variants_vep_resorted['vep_info'].alias(f'vep_info ({vep_info})'))
 
             variants_vep_resorted = variants_vep_resorted.select(pl.exclude(["original_index", "variant"]))
             sgrnas = sgrnas.with_columns(variants_vep_resorted)
 
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_chrom = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_pos = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_id = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_ref = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_alt = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_qual = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(vep_filter = pl.lit("NA_for_non_editing_guides")) # if put into use, needs to be integrated into sgrnas_ne block
-            # sgrnas_ne = sgrnas_ne.with_columns(pl.lit("NA_for_non_editing_guides").alias(f'vep_info ({vep_info})')) # if put into use, needs to be integrated into sgrnas_ne block
-
-            # variant_cols_to_modify_second += ['vep_chrom',
-            #                                   'vep_pos',
-            #                                   'vep_id',
-            #                                   'vep_ref',
-            #                                   'vep_alt',
-            #                                   'vep_qual',
-            #                                   'vep_filter',
-            #                                   f'vep_info ({vep_info})'] # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
-            # variant_cols_to_modify_second += [f'vep_info ({vep_info})'] # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
             variant_cols_to_modify_second += variants_vep_resorted.columns # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
 
         if aspect == 'exploded': # maybe also show off target edits in codons in small letters as for bedesigner
