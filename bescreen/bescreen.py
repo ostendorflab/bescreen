@@ -67,7 +67,7 @@ def arguments():
                         default=0, type=int)
     parser.add_argument('-d', '--aspect', help='Collapsed (default) or exploded aspect of the output',
                         choices=['collapsed', 'exploded'], default='collapsed', type=str)
-    parser.add_argument('-m', '--mane-select-only', help='Use only MANE select transcripts for searching and annotations. This will not find guides for non-MANE transcripts as input for variants and might lead to reduced guides for gene input.',
+    parser.add_argument('-m', '--mane-select-only', help='Use only MANE select transcripts for searching and annotations. This will not find guides for non-MANE transcripts as input and might lead to reduced guides for variant and gene input.',
                         action='store_true')
     parser.add_argument('-x', '--write-parquet', help='Force writing a new parquet file',
                         action='store_true')

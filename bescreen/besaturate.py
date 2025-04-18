@@ -66,6 +66,10 @@ def saturate_bes(annotation_file,
     elif gene_symbols:
         gene_symbols_list = gene_symbols.replace(' ', '').split(",")
 
+    real_gene_symbols_list = [gene for gene in gene_symbols_list if len(gene.split('-')) == 1]
+    transcript_symbols_list = [transcript for transcript in gene_symbols_list if len(transcript.split('-')) == 2]
+    genes_malformed = [gene for gene in gene_symbols_list if len(gene.split('-')) not in [1, 2]]
+
     ref_genome_pyfaidx = pyfaidx.Fasta(ref_genome)
 
     parquet_file = shared.check_parquet(annotation_file, write_parquet)
@@ -75,15 +79,21 @@ def saturate_bes(annotation_file,
     if mane_select_only:
         cdss = cdss.filter(pl.col('MANE_Select'))
 
-    cdss_gene = cdss.filter(pl.col('gene_name').is_in(gene_symbols_list))
+    cdss_real_gene = cdss.filter(pl.col('gene_name').is_in(real_gene_symbols_list))
+    cdss_transcript = cdss.filter(pl.col('transcript_name').is_in(transcript_symbols_list))
+    cdss_gene = pl.concat([cdss_real_gene, cdss_transcript]).unique()
+
     if cdss_gene.is_empty():
         if len(gene_symbols_list) == 1:
             raise ValueError(f"The gene {', '.join(gene_symbols_list)} was not found in the annotation file.")
         if len(gene_symbols_list) > 1:
             raise ValueError(f"None of the {len(gene_symbols_list)} genes {', '.join(gene_symbols_list)} were found in the annotation file.")
 
-    genes_found = cdss_gene['gene_name'].unique().to_list()
-    genes_not_found = [gene for gene in gene_symbols_list if gene not in genes_found]
+    real_genes_found = cdss_real_gene['gene_name'].unique().to_list()
+    real_genes_not_found = [gene for gene in real_gene_symbols_list if gene not in real_genes_found]
+    transcripts_found = cdss_transcript['transcript_name'].unique().to_list()
+    transcripts_not_found = [transcript for transcript in transcript_symbols_list if transcript not in transcripts_found]
+    genes_not_found = real_genes_not_found + transcripts_not_found + genes_malformed
 
     pamsite_relevant = pamsite.replace('N', '')
 
