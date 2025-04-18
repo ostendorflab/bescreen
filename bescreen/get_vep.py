@@ -34,35 +34,38 @@ def get_vep_annotation(variants,
                '--offline',
                '--output_file', 'STDOUT',
                '--quiet',
-               '--vcf'] + shlex.split(flags)
+               '--tab'] + shlex.split(flags)
 
 
     process_vep = subprocess.Popen(cmd_vep, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     vep_stdout = process_vep.communicate(input=variants_vep.encode('utf-8'))[0].decode('utf-8').splitlines()
     vep_csv = io.StringIO()
 
-    dtypes_vep = {'#CHROM': pl.String,
-                  'POS': pl.Int64,
-                  'ID': pl.String,
-                  'REF': pl.String,
-                  'ALT': pl.String,
-                  'QUAL': pl.String,
-                  'FILTER': pl.String,
-                  'INFO': pl.String}
+    # dtypes_vep = {'#CHROM': pl.String,
+    #               'POS': pl.Int64,
+    #               'ID': pl.String,
+    #               'REF': pl.String,
+    #               'ALT': pl.String,
+    #               'QUAL': pl.String,
+    #               'FILTER': pl.String,
+    #               'INFO': pl.String}
 
     for line in vep_stdout:
-        if line.startswith('##INFO'):
-            info = line
-        elif not line.startswith('##'):
+        # if line.startswith('##INFO'):
+        #     info = line
+        # elif not line.startswith('##'):
+        if not line.startswith('##'):
             vep_csv.write(line + '\n')
 
     vep_csv.seek(0) # what does that do exactly? Does it set the cursor to line 0?
     vep_annotation = pl.read_csv(vep_csv,
                                  separator='\t',
-                                 schema_overrides=dtypes_vep) # .with_row_index()
+                                #  schema_overrides=dtypes_vep) # .with_row_index()
+                                 infer_schema=False) # all to pl.String
     vep_csv.close()
 
-    return (info, vep_annotation)
+    # return (info, vep_annotation)
+    return vep_annotation
 
 
 if __name__ == "__main__":
