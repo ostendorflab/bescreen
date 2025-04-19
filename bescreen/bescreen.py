@@ -53,8 +53,8 @@ def arguments():
     # for both
     parser.add_argument('-p', '--pam-site', help='Sequence of the PAM site. What PAM site should your guides be designed for? Enter you PAM sequence using IUPAC code: A, C, G, T, U(=T), W(=A,T), S(=C,G), M(=A,C), K(=G,T), R(=A,G), Y(=C,T), B(=C,G,T), D(=A,G,T), H(=A,C,T), V(=A,C,G) or N(=A,C,G,T)',
                         default='NG', type=str)
-    parser.add_argument('-u', '--fiveprimepam', help="Use a PAM located at the 5' site (default is 3').",
-                        action='store_true')
+    parser.add_argument('-u', '--pamlocation', help='Location of the PAM site',
+                        choices=['5prime', '3prime'], default='3prime', type=str)
     parser.add_argument('-s', '--window-start', help='Starting position of editing window',
                         default=4, type=int)
     parser.add_argument('-e', '--window-end', help='End position of editing window',
@@ -69,7 +69,7 @@ def arguments():
                         default=0, type=int)
     parser.add_argument('-d', '--aspect', help='Collapsed (default) or exploded aspect of the output',
                         choices=['collapsed', 'exploded'], default='collapsed', type=str)
-    parser.add_argument('-m', '--mane-select-only', help='Use only MANE select transcripts for searching and annotations. This will not find guides for non-MANE transcripts as input and might lead to reduced guides for variant and gene input.',
+    parser.add_argument('-m', '--mane-select-only', help='Use only MANE select transcripts for searching and annotations. This will not find guides for non-MANE transcripts as input and might lead to reduced guides for variant and gene input',
                         action='store_true')
     parser.add_argument('-x', '--write-parquet', help='Force writing a new parquet file',
                         action='store_true')
@@ -151,7 +151,8 @@ def arguments():
     # optional
     # both
     pamsite = args.pam_site
-    fiveprimepam = args.fiveprimepam
+    pamlocation = args.pamlocation
+    fiveprimepam = True if pamlocation == '5prime' else False if pamlocation == '3prime' else False
     edit_window_start = args.window_start
     edit_window_end = args.window_end
     guidelength = args.guide_length
