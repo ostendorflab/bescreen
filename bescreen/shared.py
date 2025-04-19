@@ -32,7 +32,8 @@ def analyze_guide(guide,
                   edit_window_plus_end,
                   editable_base,
                   position_variant,
-                  distance_median_dict):
+                  distance_median_dict,
+                  fiveprimepam):
                 #   distance_median_dict,
                 #   quality_scores_dict):
 
@@ -70,14 +71,14 @@ def analyze_guide(guide,
         string_edit_poss[j] = ":"
         if guide[j] == editable_base and j == position_variant:
             string_edits[j] = "V"
-            string_edit_poss[j] = str(j+1)
+            string_edit_poss[j] = str(j+1) if not fiveprimepam else str(len(guide) - j)[::-1]
             variant_edits += 1
             all_edits += 1
             variant_edits_pos.append(j+1)
             all_edits_pos.append(j+1)
         elif guide[j] == editable_base:
             string_edits[j] = "*"
-            string_edit_poss[j] = str(j+1)
+            string_edit_poss[j] = str(j+1) if not fiveprimepam else str(len(guide) - j)[::-1]
             all_edits += 1
             all_edits_pos.append(j+1)
 
@@ -112,9 +113,9 @@ def analyze_guide(guide,
     # quality_scores_all = norm.pdf(all_edits_pos, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))
     # quality_scores_all = [quality_scores_dict[edit_pos] for edit_pos in all_edits_pos]
 
-    distance_median_variant = [str(number) for number in distance_median_variant]
+    distance_median_variant = [str(number) if not fiveprimepam else str(number)[::-1] for number in distance_median_variant]
     # quality_scores_variant = [str(round(float(number), 2)) for number in quality_scores_variant]
-    distance_median_all = [str(number) for number in distance_median_all]
+    distance_median_all = [str(number) if not fiveprimepam else str(number)[::-1] for number in distance_median_all]
     # quality_scores_all = [str(round(float(number), 2)) for number in quality_scores_all]
 
     distance_median_variant = ",".join(distance_median_variant)

@@ -17,6 +17,7 @@ def design_bes(annotation_file,
                input_variant,
                input_file,
                pamsite,
+               fiveprimepam,
                edit_window_start,
                edit_window_end,
                guidelength,
@@ -53,6 +54,35 @@ def design_bes(annotation_file,
         'C': 'T',
         'G': 'A'
     }
+
+    bes = {
+        'ABE': {'fwd': {'REF': 'A', 'ALT': 'G'},
+                'rev': {'REF': 'T', 'ALT': 'C'}},
+        'CBE': {'fwd': {'REF': 'C', 'ALT': 'T'},
+                'rev': {'REF': 'G', 'ALT': 'A'}}
+    }
+
+    if fiveprimepam:
+         # swich fwd and rev for edits
+        bes = {
+            'ABE': {'rev': {'REF': 'A', 'ALT': 'G'},
+                    'fwd': {'REF': 'T', 'ALT': 'C'}},
+            'CBE': {'rev': {'REF': 'C', 'ALT': 'T'},
+                    'fwd': {'REF': 'G', 'ALT': 'A'}}
+        }
+
+         # switch to reverse PAM
+        pamsite = shared.revcom(pamsite)
+
+        # switch window start and end and count from end
+        edit_window_start_new = guidelength - edit_window_end + 1
+        edit_window_end = guidelength - edit_window_start + 1
+        edit_window_start = edit_window_start_new
+
+        # switch window start plus and end plus
+        edit_window_start_plus_new = edit_window_end_plus
+        edit_window_end_plus = edit_window_start_plus
+        edit_window_start_plus = edit_window_start_plus_new
 
     if baseeditor == "both":
         abe = True
@@ -336,21 +366,21 @@ def design_bes(annotation_file,
         else:
             target_seq_ref_match = "no_ref_input"
 
-        if (abe and target_base_ref == "A" and alt == "G") or \
-           (abe and target_base_ref == "A" and allpossible) or \
-           (cbe and target_base_ref == "C" and alt == "T") or \
-           (cbe and target_base_ref == "C" and allpossible):
+        if (abe and target_base_ref == bes['ABE']['fwd']['REF'] and alt == bes['ABE']['fwd']['ALT']) or \
+           (abe and target_base_ref == bes['ABE']['fwd']['REF'] and allpossible) or \
+           (cbe and target_base_ref == bes['CBE']['fwd']['REF'] and alt == bes['CBE']['fwd']['ALT']) or \
+           (cbe and target_base_ref == bes['CBE']['fwd']['REF'] and allpossible):
             editable = True
             rev_com = False
-            if target_base_ref == "A":
+            if target_base_ref == bes['ABE']['fwd']['REF']:
                 be_string = "ABE"
-                if alt == "G":
+                if alt == bes['ABE']['fwd']['ALT']:
                     original_alt = True
                 else:
                     original_alt = False
-            elif target_base_ref == "C":
+            elif target_base_ref == bes['CBE']['fwd']['REF']:
                 be_string = "CBE"
-                if alt == "T":
+                if alt == bes['CBE']['fwd']['ALT']:
                     original_alt = True
                 else:
                     original_alt = False
@@ -361,21 +391,21 @@ def design_bes(annotation_file,
             target_seq_ref = str(ref_genome_pyfaidx[chrom][target_seq_ref_start:target_seq_ref_end]) # + 1 since last position is excluded
             target_seq = target_seq_ref
 
-        elif (abe and target_base_ref == "T" and alt == "C") or \
-             (abe and target_base_ref == "T" and allpossible) or \
-             (cbe and target_base_ref == "G" and alt == "A") or \
-             (cbe and target_base_ref == "G" and allpossible):
+        elif (abe and target_base_ref == bes['ABE']['rev']['REF'] and alt == bes['ABE']['rev']['ALT']) or \
+             (abe and target_base_ref == bes['ABE']['rev']['REF'] and allpossible) or \
+             (cbe and target_base_ref == bes['CBE']['rev']['REF'] and alt == bes['CBE']['rev']['ALT']) or \
+             (cbe and target_base_ref == bes['CBE']['rev']['REF'] and allpossible):
             editable = True
             rev_com = True
-            if target_base_ref == "T":
+            if target_base_ref == bes['ABE']['rev']['REF']:
                 be_string = "ABE"
-                if alt == "C":
+                if alt == bes['ABE']['rev']['ALT']:
                     original_alt = True
                 else:
                     original_alt = False
-            elif target_base_ref == "G":
+            elif target_base_ref == bes['CBE']['rev']['REF']:
                 be_string = "CBE"
-                if alt == "A":
+                if alt == bes['CBE']['rev']['ALT']:
                     original_alt = True
                 else:
                     original_alt = False
@@ -522,7 +552,8 @@ def design_bes(annotation_file,
                                                               edit_window_end_plus,
                                                               target_base,
                                                               variant_position,
-                                                              distance_median_dict)
+                                                              distance_median_dict,
+                                                              fiveprimepam)
                     # the following lines have been removed from the statement above:
                     # quality_scores_variant, \
                     # distance_median_all, \
@@ -831,6 +862,18 @@ def design_bes(annotation_file,
                             (filter_stoplost) and (not guide_is_stoplost) or
                             (filter_startlost) and (not guide_is_startlost)):
 
+                        if fiveprimepam:
+                            possible_guide = shared.revcom(possible_guide)
+                            possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                            possible_pam = shared.revcom(possible_pam)
+                            edit_window = shared.revcom(edit_window)
+                            edit_window_plus = shared.revcom(edit_window_plus)
+                            safety_region = shared.revcom(safety_region)
+                            edit_string = edit_string[::-1]
+                            edit_pos_string = edit_pos_string[::-1]
+                            distance_median_variant = distance_median_variant[::-1]
+                            distance_median_all = distance_median_all[::-1]
+
                         # main fields
                         possible_guides_with_pam.append(possible_guide_with_pam)
                         possible_guides.append(possible_guide)
@@ -931,7 +974,11 @@ def design_bes(annotation_file,
             all_edit_pos_strings.append(edit_pos_strings) # list
             all_possible_guides.append(possible_guides) # list
             all_possible_pams.append(possible_pams)
-            all_rev_com.append("{}".format("-" if rev_com else "+"))
+            all_rev_com.append("{}".format("-" if rev_com and not fiveprimepam else
+                                           "+" if not rev_com and not fiveprimepam else
+                                           '+' if rev_com and fiveprimepam else
+                                           '-' if not rev_com and fiveprimepam else
+                                           ''))
             all_edit_window.append(edit_windows) # list
             all_num_edits.append(num_editss)
             all_specific.append(specifics) # list

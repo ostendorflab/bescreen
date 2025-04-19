@@ -13,6 +13,7 @@ def saturate_region(ref_genome,
                     regions,
                     input_file,
                     pamsite,
+                    fiveprimepam,
                     edit_window_start,
                     edit_window_end,
                     guidelength,
@@ -36,6 +37,28 @@ def saturate_region(ref_genome,
         'CBE': {'fwd': {'REF': 'C', 'ALT': 'T'},
                 'rev': {'REF': 'G', 'ALT': 'A'}}
     }
+
+    if fiveprimepam:
+         # swich fwd and rev for edits
+        bes = {
+            'ABE': {'rev': {'REF': 'A', 'ALT': 'G'},
+                    'fwd': {'REF': 'T', 'ALT': 'C'}},
+            'CBE': {'rev': {'REF': 'C', 'ALT': 'T'},
+                    'fwd': {'REF': 'G', 'ALT': 'A'}}
+        }
+
+         # switch to reverse PAM
+        pamsite = shared.revcom(pamsite)
+
+        # switch window start and end and count from end
+        edit_window_start_new = guidelength - edit_window_end + 1
+        edit_window_end = guidelength - edit_window_start + 1
+        edit_window_start = edit_window_start_new
+
+        # switch window start plus and end plus
+        edit_window_start_plus_new = edit_window_end_plus
+        edit_window_end_plus = edit_window_start_plus
+        edit_window_start_plus = edit_window_start_plus_new
 
     # modified input
     if baseeditor == "ABE":
@@ -220,7 +243,8 @@ def saturate_region(ref_genome,
                                                                         edit_window_end_plus,
                                                                         bes[be]['fwd']['REF'],
                                                                         None,
-                                                                        distance_median_dict)
+                                                                        distance_median_dict,
+                                                                        fiveprimepam)
                                 # the following lines have been removed from the statement above:
                                 # quality_scores_variant_unused, \
                                 # distance_median_all, \
@@ -231,6 +255,16 @@ def saturate_region(ref_genome,
                                 # if  (edit_window_bases_unused != edit_window_bases or
                                 #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
                                 #     raise Exception("output of analyze_guide() wrong in forward search")
+
+                                if fiveprimepam:
+                                    possible_guide = shared.revcom(possible_guide)
+                                    possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                    edit_window_bases = shared.revcom(edit_window_bases)
+                                    edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                    safety_region = shared.revcom(safety_region)
+                                    edit_string = edit_string[::-1]
+                                    edit_pos_string = edit_pos_string[::-1]
+                                    distance_median_all = distance_median_all[::-1]
 
                                 be_output.append(be)
                                 variant_output.append(variants) # list
@@ -244,7 +278,7 @@ def saturate_region(ref_genome,
                                 edit_window_plus_output.append(edit_window_plus_bases)
                                 edit_window_plus_output_strand.append(edit_window_plus_bases)
                                 specific_plus_output.append(specific_plus)
-                                direction_output.append('+') # forward
+                                direction_output.append('+' if not fiveprimepam else '-') # forward
                                 num_edits_output.append(num_edits)
                                 num_edits_plus_output.append(num_edits_plus)
                                 safety_region_output.append(safety_region)
@@ -263,6 +297,14 @@ def saturate_region(ref_genome,
                                 ne_plus = False
                             else:
                                 ne_plus = True
+
+                            if fiveprimepam:
+                                possible_guide = shared.revcom(possible_guide)
+                                possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                edit_window_bases = shared.revcom(edit_window_bases)
+                                edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                safety_region = shared.revcom(safety_region)
+
                             be_output_ne.append(be)
                             guide_output_ne.append(possible_guide)
                             guide_with_pam_output_ne.append(possible_guide_with_pam)
@@ -273,7 +315,7 @@ def saturate_region(ref_genome,
                             edit_window_plus_output_ne.append(edit_window_plus_bases)
                             edit_window_plus_output_strand_ne.append(edit_window_plus_bases)
                             ne_plus_output_ne.append(ne_plus)
-                            direction_output_ne.append('+') # forward
+                            direction_output_ne.append('+' if not fiveprimepam else '-') # forward
                             safety_region_output_ne.append(safety_region)
                             guide_starts_output_ne.append(startpos_fwd + 1)
                             guide_ends_output_ne.append(startpos_fwd + guidelength + 1)
@@ -341,7 +383,8 @@ def saturate_region(ref_genome,
                                                                         edit_window_end_plus,
                                                                         bes[be]['fwd']['REF'],
                                                                         None,
-                                                                        distance_median_dict)
+                                                                        distance_median_dict,
+                                                                        fiveprimepam)
                                 # the following lines have been removed from the statement above:
                                 # quality_scores_variant_unused, \
                                 # distance_median_all, \
@@ -356,6 +399,16 @@ def saturate_region(ref_genome,
                                 #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
                                 #     raise Exception("output of analyze_guide() wrong in reverse search")
 
+                                if fiveprimepam:
+                                    possible_guide = shared.revcom(possible_guide)
+                                    possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                    edit_window_bases = shared.revcom(edit_window_bases)
+                                    edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                    safety_region = shared.revcom(safety_region)
+                                    edit_string = edit_string[::-1]
+                                    edit_pos_string = edit_pos_string[::-1]
+                                    distance_median_all = distance_median_all[::-1]
+
                                 be_output.append(be)
                                 variant_output.append(variants) # list
                                 guide_output.append(shared.revcom(possible_guide))
@@ -368,7 +421,7 @@ def saturate_region(ref_genome,
                                 edit_window_plus_output.append(shared.revcom(edit_window_plus_bases))
                                 edit_window_plus_output_strand.append(edit_window_plus_bases)
                                 specific_plus_output.append(specific_plus)
-                                direction_output.append('-') # reverse
+                                direction_output.append('-' if not fiveprimepam else '+') # reverse
                                 num_edits_output.append(num_edits)
                                 num_edits_plus_output.append(num_edits_plus)
                                 safety_region_output.append(shared.revcom(safety_region))
@@ -387,6 +440,14 @@ def saturate_region(ref_genome,
                                 ne_plus = False
                             else:
                                 ne_plus = True
+
+                            if fiveprimepam:
+                                possible_guide = shared.revcom(possible_guide)
+                                possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                edit_window_bases = shared.revcom(edit_window_bases)
+                                edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                safety_region = shared.revcom(safety_region)
+
                             be_output_ne.append(be)
                             guide_output_ne.append(shared.revcom(possible_guide))
                             guide_with_pam_output_ne.append(shared.revcom(possible_guide_with_pam))
@@ -397,7 +458,7 @@ def saturate_region(ref_genome,
                             edit_window_plus_output_ne.append(shared.revcom(edit_window_plus_bases))
                             edit_window_plus_output_strand_ne.append(edit_window_plus_bases)
                             ne_plus_output_ne.append(ne_plus)
-                            direction_output_ne.append('-') # reverse
+                            direction_output_ne.append('-' if not fiveprimepam else '+') # reverse
                             safety_region_output_ne.append(shared.revcom(safety_region))
                             guide_starts_output_ne.append(startpos_rev + len(pamsite) + 1)
                             guide_ends_output_ne.append(startpos_rev + guidelength + len(pamsite) + 1)

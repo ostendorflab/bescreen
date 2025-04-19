@@ -53,6 +53,8 @@ def arguments():
     # for both
     parser.add_argument('-p', '--pam-site', help='Sequence of the PAM site. What PAM site should your guides be designed for? Enter you PAM sequence using IUPAC code: A, C, G, T, U(=T), W(=A,T), S(=C,G), M(=A,C), K(=G,T), R(=A,G), Y(=C,T), B(=C,G,T), D(=A,G,T), H(=A,C,T), V(=A,C,G) or N(=A,C,G,T)',
                         default='NG', type=str)
+    parser.add_argument('-u', '--fiveprimepam', help="Use a PAM located at the 5' site (default is 3').",
+                        action='store_true')
     parser.add_argument('-s', '--window-start', help='Starting position of editing window',
                         default=4, type=int)
     parser.add_argument('-e', '--window-end', help='End position of editing window',
@@ -149,6 +151,7 @@ def arguments():
     # optional
     # both
     pamsite = args.pam_site
+    fiveprimepam = args.fiveprimepam
     edit_window_start = args.window_start
     edit_window_end = args.window_end
     guidelength = args.guide_length
@@ -234,6 +237,7 @@ def arguments():
             gene_symbols,
             regions,
             pamsite,
+            fiveprimepam,
             edit_window_start,
             edit_window_end,
             guidelength,
@@ -345,6 +349,7 @@ if __name__ == "__main__":
     gene_symbols_arg, \
     regions_arg, \
     pamsite_arg, \
+    fiveprimepam_arg, \
     edit_window_start_arg, \
     edit_window_end_arg, \
     guidelength_arg, \
@@ -386,6 +391,7 @@ if __name__ == "__main__":
                                                    input_variant_arg,
                                                    input_file_arg,
                                                    pamsite_arg,
+                                                   fiveprimepam_arg,
                                                    edit_window_start_arg,
                                                    edit_window_end_arg,
                                                    guidelength_arg,
@@ -432,6 +438,7 @@ if __name__ == "__main__":
                                                       gene_symbols_arg,
                                                       input_file_arg,
                                                       pamsite_arg,
+                                                      fiveprimepam_arg,
                                                       edit_window_start_arg,
                                                       edit_window_end_arg,
                                                       guidelength_arg,
@@ -480,6 +487,7 @@ if __name__ == "__main__":
                                                            regions_arg,
                                                            input_file_arg,
                                                            pamsite_arg,
+                                                           fiveprimepam_arg,
                                                            edit_window_start_arg,
                                                            edit_window_end_arg,
                                                            guidelength_arg,

@@ -14,6 +14,7 @@ def saturate_bes(annotation_file,
                  gene_symbols,
                  input_file,
                  pamsite,
+                 fiveprimepam,
                  edit_window_start,
                  edit_window_end,
                  guidelength,
@@ -47,6 +48,28 @@ def saturate_bes(annotation_file,
         'CBE': {'fwd': {'REF': 'C', 'ALT': 'T'},
                 'rev': {'REF': 'G', 'ALT': 'A'}}
     }
+
+    if fiveprimepam:
+         # swich fwd and rev for edits
+        bes = {
+            'ABE': {'rev': {'REF': 'A', 'ALT': 'G'},
+                    'fwd': {'REF': 'T', 'ALT': 'C'}},
+            'CBE': {'rev': {'REF': 'C', 'ALT': 'T'},
+                    'fwd': {'REF': 'G', 'ALT': 'A'}}
+        }
+
+         # switch to reverse PAM
+        pamsite = shared.revcom(pamsite)
+
+        # switch window start and end and count from end
+        edit_window_start_new = guidelength - edit_window_end + 1
+        edit_window_end = guidelength - edit_window_start + 1
+        edit_window_start = edit_window_start_new
+
+        # switch window start plus and end plus
+        edit_window_start_plus_new = edit_window_end_plus
+        edit_window_end_plus = edit_window_start_plus
+        edit_window_start_plus = edit_window_start_plus_new
 
     # modified input
     if baseeditor == "ABE":
@@ -489,7 +512,8 @@ def saturate_bes(annotation_file,
                                                                       edit_window_end_plus,
                                                                       bes[be]['fwd']['REF'],
                                                                       None,
-                                                                      distance_median_dict)
+                                                                      distance_median_dict,
+                                                                      fiveprimepam)
                             # the following lines have been removed from the statement above:
                             # quality_scores_variant_unused, \
                             # distance_median_all, \
@@ -562,6 +586,16 @@ def saturate_bes(annotation_file,
                                     (filter_stoplost) and (not guide_is_stoplost) or
                                     (filter_startlost) and (not guide_is_startlost)):
 
+                                if fiveprimepam:
+                                    possible_guide = shared.revcom(possible_guide)
+                                    possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                    edit_window_bases = shared.revcom(edit_window_bases)
+                                    edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                    safety_region = shared.revcom(safety_region)
+                                    edit_string = edit_string[::-1]
+                                    edit_pos_string = edit_pos_string[::-1]
+                                    distance_median_all = distance_median_all[::-1]
+
                                 symbol_output.append(gene_symbol)
                                 transcript_output.append(transcript_symbol)
                                 be_output.append(be)
@@ -578,7 +612,7 @@ def saturate_bes(annotation_file,
                                 specific_plus_output.append(specific_plus)
                                 synonymous_output.append(synonymous)
                                 consequence_output.append(consequence)
-                                direction_output.append('+') # forward
+                                direction_output.append('+' if not fiveprimepam else '-') # forward
                                 codon_ref.append(codons) # list
                                 aa_ref.append(aas) # list
                                 aa_pos.append(aa_positions)
@@ -606,6 +640,14 @@ def saturate_bes(annotation_file,
                             ne_plus = False
                         else:
                             ne_plus = True
+
+                        if fiveprimepam:
+                            possible_guide = shared.revcom(possible_guide)
+                            possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                            edit_window_bases = shared.revcom(edit_window_bases)
+                            edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                            safety_region = shared.revcom(safety_region)
+
                         symbol_output_ne.append(gene_symbol)
                         transcript_output_ne.append(transcript_symbol)
                         be_output_ne.append(be)
@@ -618,7 +660,7 @@ def saturate_bes(annotation_file,
                         edit_window_plus_output_ne.append(edit_window_plus_bases)
                         edit_window_plus_output_strand_ne.append(edit_window_plus_bases)
                         ne_plus_output_ne.append(ne_plus)
-                        direction_output_ne.append('+') # forward
+                        direction_output_ne.append('+' if not fiveprimepam else '-') # forward
                         exon_number_output_ne.append(exon_number)
                         first_transcript_exon_output_ne.append(first_transcript_exon)
                         last_transcript_exon_output_ne.append(last_transcript_exon)
@@ -881,7 +923,8 @@ def saturate_bes(annotation_file,
                                                                       edit_window_end_plus,
                                                                       bes[be]['fwd']['REF'],
                                                                       None,
-                                                                      distance_median_dict)
+                                                                      distance_median_dict,
+                                                                      fiveprimepam)
                             # the following lines have been removed from the statement above:
                             # quality_scores_variant_unused, \
                             # distance_median_all, \
@@ -957,6 +1000,16 @@ def saturate_bes(annotation_file,
                                     (filter_stoplost) and (not guide_is_stoplost) or
                                     (filter_startlost) and (not guide_is_startlost)):
 
+                                if fiveprimepam:
+                                    possible_guide = shared.revcom(possible_guide)
+                                    possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                    edit_window_bases = shared.revcom(edit_window_bases)
+                                    edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                    safety_region = shared.revcom(safety_region)
+                                    edit_string = edit_string[::-1]
+                                    edit_pos_string = edit_pos_string[::-1]
+                                    distance_median_all = distance_median_all[::-1]
+
                                 symbol_output.append(gene_symbol)
                                 transcript_output.append(transcript_symbol)
                                 be_output.append(be)
@@ -973,7 +1026,7 @@ def saturate_bes(annotation_file,
                                 specific_plus_output.append(specific_plus)
                                 synonymous_output.append(synonymous)
                                 consequence_output.append(consequence)
-                                direction_output.append('-') # reverse
+                                direction_output.append('-' if not fiveprimepam else '+') # reverse
                                 codon_ref.append(codons) # list
                                 aa_ref.append(aas) # list
                                 aa_pos.append(aa_positions)
@@ -1001,6 +1054,14 @@ def saturate_bes(annotation_file,
                             ne_plus = False
                         else:
                             ne_plus = True
+
+                        if fiveprimepam:
+                            possible_guide = shared.revcom(possible_guide)
+                            possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                            edit_window_bases = shared.revcom(edit_window_bases)
+                            edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                            safety_region = shared.revcom(safety_region)
+
                         symbol_output_ne.append(gene_symbol)
                         transcript_output_ne.append(transcript_symbol)
                         be_output_ne.append(be)
@@ -1013,7 +1074,7 @@ def saturate_bes(annotation_file,
                         edit_window_plus_output_ne.append(shared.revcom(edit_window_plus_bases))
                         edit_window_plus_output_strand_ne.append(edit_window_plus_bases)
                         ne_plus_output_ne.append(ne_plus)
-                        direction_output_ne.append('-') # reverse
+                        direction_output_ne.append('-' if not fiveprimepam else '+') # reverse
                         exon_number_output_ne.append(exon_number)
                         first_transcript_exon_output_ne.append(first_transcript_exon)
                         last_transcript_exon_output_ne.append(last_transcript_exon)
