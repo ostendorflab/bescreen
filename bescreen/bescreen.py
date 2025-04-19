@@ -51,8 +51,8 @@ def arguments():
 
     # optional
     # for both
-    parser.add_argument('-p', '--pam-site', help='Sequence of the PAM site',
-                        choices=['NGG', 'NG'], default='NG', type=str)
+    parser.add_argument('-p', '--pam-site', help='Sequence of the PAM site. What PAM site should your guides be designed for? Enter you PAM sequence using IUPAC code: A, C, G, T, U(=T), W(=A,T), S(=C,G), M(=A,C), K(=G,T), R(=A,G), Y(=C,T), B(=C,G,T), D(=A,G,T), H(=A,C,T), V(=A,C,G) or N(=A,C,G,T)',
+                        default='NG', type=str)
     parser.add_argument('-s', '--window-start', help='Starting position of editing window',
                         default=4, type=int)
     parser.add_argument('-e', '--window-end', help='End position of editing window',

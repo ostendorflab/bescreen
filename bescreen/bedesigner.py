@@ -9,6 +9,7 @@ import shared
 import dbsnp_sqlite3
 import protein_variant
 import blast_guides
+import itertools
 
 
 def design_bes(annotation_file,
@@ -278,6 +279,13 @@ def design_bes(annotation_file,
         pam = pamsite # unnecessary
         pam_length = len(pam) # 2 or 3
 
+        pam_relevant = pam.lstrip('N') # needs to be rstrip() for 5' PAM
+
+        pamlist = list(pam_relevant)
+        pamlist_real = [shared.iupac_nt_code.get(item, item) for item in pamlist]
+        pamlist_real_all = list(itertools.product(*pamlist_real))
+        pamlist_real_string = [''.join(pam_real_string) for pam_real_string in pamlist_real_all]
+
         total_length = length + pam_length
         length_edit_window = position_edit_window_end - (position_edit_window_start - 1)
 
@@ -473,25 +481,25 @@ def design_bes(annotation_file,
             synonymousss = []
             consequences = []
 
-            count_of_N_in_pam = pam.count("N")
-            count_of_G_in_pam = pam_length - count_of_N_in_pam
+            count_ingored_N_in_pam = pam_length - len(pam_relevant)
+            count_of_other_in_pam = pam_length - count_ingored_N_in_pam
 
-            start_of_pam_search = bases_after_variant_with_pam - bases_after_ew - count_of_N_in_pam # the N of NGG/NG is irrelevant for the search here
-            end_of_pam_search = count_of_G_in_pam - 1 # the N of NGG/NG is irrelevant for the search here; stop at beginning of last pam
-            length_of_pam_search = count_of_G_in_pam # the N of NGG/NG is irrelevant for the search here
+            start_of_pam_search = bases_after_variant_with_pam - bases_after_ew - count_ingored_N_in_pam # the N of NGG/NG is irrelevant for the search here
+            end_of_pam_search = count_of_other_in_pam - 1 # the N of NGG/NG is irrelevant for the search here; stop at beginning of last pam
+            length_of_pam_search = count_of_other_in_pam # the N of NGG/NG is irrelevant for the search here
 
-            start_before_hit = length + count_of_N_in_pam
-            end_after_hit_with_pam = count_of_G_in_pam
-            end_after_hit_guide_only = count_of_N_in_pam
+            start_before_hit = length + count_ingored_N_in_pam
+            end_after_hit_with_pam = count_of_other_in_pam
+            end_after_hit_guide_only = count_ingored_N_in_pam
 
             variant_position = bases_before_variant
 
             for i in range(len(target_seq) - start_of_pam_search,
                         len(target_seq) - end_of_pam_search):
-                if target_seq[i:i + length_of_pam_search] == pam.replace("N", ""):
+                if any(target_seq[i:i + length_of_pam_search] == pam_real_string for pam_real_string in pamlist_real_string):
                     possible_guide_with_pam = target_seq[i - start_before_hit:i + end_after_hit_with_pam]
                     possible_guide = target_seq[i - start_before_hit:i - end_after_hit_guide_only]
-                    possible_pam = target_seq[i - count_of_N_in_pam:i + count_of_G_in_pam]
+                    possible_pam = target_seq[i - count_ingored_N_in_pam:i + count_of_other_in_pam]
 
                     # shared.analyze_guide() per guide
                     edit_window, \

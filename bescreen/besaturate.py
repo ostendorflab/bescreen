@@ -6,6 +6,7 @@ import pysam
 import get_vep
 import shared
 import blast_guides
+import itertools
 
 
 def saturate_bes(annotation_file,
@@ -95,7 +96,12 @@ def saturate_bes(annotation_file,
     transcripts_not_found = [transcript for transcript in transcript_symbols_list if transcript not in transcripts_found]
     genes_not_found = real_genes_not_found + transcripts_not_found + genes_malformed
 
-    pamsite_relevant = pamsite.replace('N', '')
+    pamsite_relevant = pamsite.lstrip('N') # needs to be rstrip() for 5' PAM
+
+    pamlist = list(pamsite_relevant)
+    pamlist_real = [shared.iupac_nt_code.get(item, item) for item in pamlist]
+    pamlist_real_all = list(itertools.product(*pamlist_real))
+    pamlist_real_string = [''.join(pam_real_string) for pam_real_string in pamlist_real_all]
 
     # ---[***}************NG <- guide
     # >TAA----------------NG <- sequence
@@ -240,7 +246,7 @@ def saturate_bes(annotation_file,
                 edit_window_plus_bases = possible_guide[edit_window_start - 1 - edit_window_start_plus:edit_window_end + edit_window_end_plus] # sliding window for edit window plus
                 safety_region = possible_guide[edit_window_start - 1 - edit_window_start_plus:edit_window_start - 1] + edit_window_bases.lower() + possible_guide[edit_window_end:edit_window_end + edit_window_end_plus]
 
-                if possible_guide_with_pam.endswith(pamsite_relevant): # PAM found at 5' end
+                if any(possible_guide_with_pam.endswith(pam_real_string) for pam_real_string in pamlist_real_string): # PAM found at 5' end
 
                     if bes[be]['fwd']['REF'] in edit_window_bases: # editable base in edit window
 
@@ -632,7 +638,7 @@ def saturate_bes(annotation_file,
                 edit_window_plus_bases = possible_guide[guidelength - edit_window_end - edit_window_end_plus:guidelength - edit_window_start + 1 + edit_window_start_plus] # sliding window for edit window plus
                 safety_region = possible_guide[guidelength - edit_window_end - edit_window_end_plus:guidelength - edit_window_end] + edit_window_bases.lower() + possible_guide[guidelength - edit_window_start + 1:guidelength - edit_window_start + 1 + edit_window_start_plus]
 
-                if possible_guide_with_pam.startswith(shared.revcom(pamsite_relevant)): # shared.revcom(PAM) found at 3' end
+                if any(possible_guide_with_pam.startswith(shared.revcom(pam_real_string)) for pam_real_string in pamlist_real_string): # shared.revcom(PAM) found at 3' end
 
                     if bes[be]['rev']['REF'] in edit_window_bases: # shared.revcom(editable base) in edit window
 
