@@ -51,7 +51,9 @@ def saturate_region(ref_genome,
         edit_window_start_plus = edit_window_start_plus_new
 
     # select base editors
-    if not 'all' in baseeditor:
+    if not baseeditor:
+        raise ValueError('Please select at least one base editor!')
+    elif not 'all' in baseeditor:
         bes = {key: bes[key] for key in baseeditor}
 
     if input_file:
