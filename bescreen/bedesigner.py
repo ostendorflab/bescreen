@@ -48,6 +48,9 @@ def design_bes(annotation_file,
                filter_stoplost,
                filter_startlost):
 
+    if guidelength < 17:
+        raise ValueError('Please set the guide length to at least 17 bp!')
+
     bes = shared.bes
 
     if fiveprimepam:

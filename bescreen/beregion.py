@@ -31,6 +31,9 @@ def saturate_region(ref_genome,
                     blast,
                     no_contigs):
 
+    if guidelength < 17:
+        raise ValueError('Please set the guide length to at least 17 bp!')
+
     bes = shared.bes
 
     if fiveprimepam:

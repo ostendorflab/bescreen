@@ -59,7 +59,7 @@ def arguments():
                         default=4, type=int)
     parser.add_argument('-e', '--window-end', help='End position of editing window',
                         default=8, type=int)
-    parser.add_argument('-l', '--guide-length', help='Length of guide',
+    parser.add_argument('-l', '--guide-length', help='Length of guide (the minimum is 17 bp)',
                         default=20, type=int)
     base_editors = list(shared.bes.keys())
     parser.add_argument('-b', '--base-editor', help=f"Base editors to design guides for (Available base editors are {', '.join(base_editors)}. Use one or chain multiple using a comma or use 'all' to use all)",
@@ -148,6 +148,9 @@ def arguments():
 
     if any(be not in base_editors + ['all'] for be in args.base_editor.split(',')):
         sys.exit('At least one invalid base editor was used!')
+
+    if args.guide_length < 17:
+        sys.exit('Please set the guide length to at least 17 bp!')
 
     # input
 
