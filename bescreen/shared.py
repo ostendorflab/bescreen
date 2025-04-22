@@ -392,7 +392,7 @@ def get_be_presets_dict(be_preset_tsv):
             pl.col("plus_end").fill_null(strategy="zero")
         )
 
-    preset_dict['default'] = {"class": 'both',
+    preset_dict['default'] = {"class": 'all',
                               "window_start": 4,
                               "window_end": 8,
                               "plus_start": 0,
