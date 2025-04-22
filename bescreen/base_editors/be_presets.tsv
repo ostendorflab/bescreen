@@ -3,6 +3,7 @@ A3A-BE3	CBE	4	8			20	NGG						beditor	false	true
 ABE7.10	ABE	4	7		1	20	NGG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true
 ABE7.10*	ABE	4	8	2	1	20	NGG	17	13	18–19	12	counted from PAM; length not given; set to 20	BE-FF	false	true
 ABE7.9	ABE	5	8	1	1	20	NGG	16	13	17	12	counted from PAM; length not given; set to 20	BE-FF	false	true
+ABE8e	ABE	3	8			20							Sheriff et al, 2022	false	true
 BE-PLUS	CBE	4	14		2	20	NGG	17	7		5–6	counted from PAM; length not given; set to 20	BE-FF	false	true
 BE1	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
 BE2	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
@@ -44,6 +45,8 @@ hA3A-eBE-Y132D	CBE	3	7			20	NGG					no edit given, but all CBE?	BEable-GPS	false
 hA3A-eBE3	CBE	2	13			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true
 HF-BE3	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
 NG-ABEmax	ABE	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true
+TadCBEd	CBE	3	9			20							Neugebauer et al, 2023	false	true
+TadCBEs	CBE	3	8			20							Neugebauer et al, 2023	false	true
 Target-AID	CBE	2	4		4	20	NGG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true
 Target-AID-NG	CBE	2	4		4	20	NG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true
 unusable_BE3-R33A/K34A	CBE	5	6			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false
@@ -52,6 +55,7 @@ unusable_eA3A-BE3	CBE	4	8			20	NGG					unusable?	beditor	false	false
 unusable_eA3A-BE3	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20; when C comes after T (discard)	BE-FF	false	false
 unusable_eA3А-BE3	CBE	4	8			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false
 unusable_evoCDA1-BE4max	CBE	1	12		2	20	NGG	20	9		7–8	counted from PAM; length not given; set to 20;* may exhibit editing upstream to the protospacer	BE-FF	false	false
+V106W-TadCBEs	CBE	3	8			20							Neugebauer et al, 2023	false	true
 xABE	ABE	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true
 xBE3	CBE	4	8	2	3	20	NG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
 YE1-BE3	CBE	5	7	1		20	NGG	16	14	17		counted from PAM; length not given; set to 20	BE-FF	false	true

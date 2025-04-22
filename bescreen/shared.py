@@ -378,15 +378,17 @@ def get_be_presets_dict(be_preset_tsv):
             pl.col("window_end"),
             pl.col("plus_start"),
             pl.col("plus_end"),
-            pl.col("guide_length"),
-            pl.col("pam")
+            pl.col("guide_length")
+            # pl.col("guide_length"),
+            # pl.col("pam")
         ).filter(
             ~pl.col("name").is_null(),
             ~pl.col("class").is_null(),
             ~pl.col("window_start").is_null(),
             ~pl.col("window_end").is_null(),
-            ~pl.col("guide_length").is_null(),
-            ~pl.col("pam").is_null()
+            ~pl.col("guide_length").is_null()
+            # ~pl.col("guide_length").is_null(),
+            # ~pl.col("pam").is_null()
         ).with_columns(
             pl.col("plus_start").fill_null(strategy="zero"),
             pl.col("plus_end").fill_null(strategy="zero")
@@ -397,8 +399,9 @@ def get_be_presets_dict(be_preset_tsv):
                               "window_end": 8,
                               "plus_start": 0,
                               "plus_end": 0,
-                              "guide_length": 20,
-                              "pam": 'NG'}
+                              "guide_length": 20}
+                            #   "guide_length": 20,
+                            #   "pam": 'NG'}
 
     for row in preset_df.iter_rows(named=True):
         preset_dict[row['name']] = {"class": row['class'],
@@ -406,8 +409,9 @@ def get_be_presets_dict(be_preset_tsv):
                                     "window_end": row['window_end'],
                                     "plus_start": row['plus_start'],
                                     "plus_end": row['plus_end'],
-                                    "guide_length": row['guide_length'],
-                                    "pam": row['pam']}
+                                    "guide_length": row['guide_length']}
+                                    # "guide_length": row['guide_length'],
+                                    # "pam": row['pam']}
 
     return preset_dict
 

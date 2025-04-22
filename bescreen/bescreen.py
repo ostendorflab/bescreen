@@ -221,8 +221,8 @@ def arguments():
     be_preset = args.be_preset
     if be_preset:
         sys_argvs = sys.argv
-        if (not '-p' in sys_argvs) and (not '--pam-site' in sys_argvs):
-            pamsite = base_editor_presets[be_preset]['pam']
+        # if (not '-p' in sys_argvs) and (not '--pam-site' in sys_argvs):
+        #     pamsite = base_editor_presets[be_preset]['pam']
         if (not '-s' in sys_argvs) and (not '--window-start' in sys_argvs):
             edit_window_start = base_editor_presets[be_preset]['window_start']
         if (not '-e' in sys_argvs) and (not '--window-end' in sys_argvs):
