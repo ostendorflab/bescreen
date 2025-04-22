@@ -620,10 +620,57 @@ def design_bes(annotation_file,
                                                     aa = "Start" + aa
 
                                         else:
-                                            codon = "incomplete_codon"
-                                            codon_edited = "incomplete_codon"
-                                            aa = "codon_incomplete"
-                                            aa_edited = "codon_incomplete"
+                                            try:
+                                                codon_list = []
+                                                for ntpos in range(edit - offset, edit + 3 - offset):
+                                                    if ntpos < row["Start"]:
+                                                        new_exon = cdss.filter(
+                                                            (pl.col('gene_name') == gene_symbol) &
+                                                            (pl.col('transcript_name') == transcript_symbol) &
+                                                            (pl.col('exon_number') == exon_number - 1) &
+                                                            (pl.col('first_transcript_exon') == first_transcript_exon) &
+                                                            (pl.col('last_transcript_exon') == last_transcript_exon) &
+                                                            (pl.col('Chromosome') == chrom)
+                                                            )
+                                                        if not len(new_exon) == 0:
+                                                            raise AssertionError('More then one previous exon!')
+                                                        new_exon = new_exon.to_dict(as_series=False)
+                                                        new_ntpos = new_exon['End'][0] - (row["Start"] - ntpos)
+                                                        codon_list.append(str(ref_genome_pyfaidx[new_exon['Chromosome'][0]][new_ntpos]))
+                                                    elif row["Start"] <= ntpos < row["End"]:
+                                                        codon_list.append(str(ref_genome_pyfaidx[row["Chromosome"]][ntpos]))
+                                                    elif row["End"] <= ntpos:
+                                                        new_exon = cdss.filter(
+                                                            (pl.col('gene_name') == gene_symbol) &
+                                                            (pl.col('transcript_name') == transcript_symbol) &
+                                                            (pl.col('exon_number') == exon_number + 1) &
+                                                            (pl.col('first_transcript_exon') == first_transcript_exon) &
+                                                            (pl.col('last_transcript_exon') == last_transcript_exon) &
+                                                            (pl.col('Chromosome') == chrom)
+                                                            )
+                                                        if not len(new_exon) == 0:
+                                                            raise AssertionError('More then one next exon!')
+                                                        new_exon = new_exon.to_dict(as_series=False)
+                                                        new_ntpos = new_exon['Start'][0] + (ntpos - row["End"])
+                                                        codon_list.append(str(ref_genome_pyfaidx[new_exon['Chromosome'][0]][new_ntpos]))
+                                                codon = ''.join(codon_list)
+                                                codon_edited = shared.replace_str_index(codon, offset, bes[be]['fwd']['ALT']) # specific for search direction
+
+                                                if str(row['Strand']) == '-':
+                                                    codon = shared.revcom(codon)
+                                                    codon_edited = shared.revcom(codon_edited)
+                                                aa = shared.codon_sun_one_letter[codon]
+                                                aa_edited = shared.codon_sun_one_letter[codon_edited]
+
+                                                if aa == shared.codon_sun_one_letter["ATG"] and exon_number == first_transcript_exon:
+                                                    if (row['Strand'] == '+' and (row["Start"] <= edit < (row["Start"] + 3))) or (row['Strand'] == '-' and ((row["End"] - 3) <= edit < row["End"])):
+                                                        codon = "Start" + codon
+                                                        aa = "Start" + aa
+                                            except:
+                                                codon = "incomplete_codon"
+                                                codon_edited = "incomplete_codon"
+                                                aa = "codon_incomplete"
+                                                aa_edited = "codon_incomplete"
 
                                         if len(total_poss) == 1:
                                             if aa == aa_edited:
