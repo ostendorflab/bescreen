@@ -412,6 +412,16 @@ def get_be_presets_dict(be_preset_tsv):
     return preset_dict
 
 
+def fiveprimepam_bes(bes):
+    for be in bes:
+        bes[be]['fwd2'] = bes[be]['rev']
+        bes[be]['rev'] = bes[be]['fwd']
+        bes[be]['fwd'] = bes[be]['fwd2']
+        del bes[be]['fwd2']
+
+    return bes
+
+
 codon_sun_three_letters = {
     'TTT': 'Phe', 'TCT': 'Ser', 'TAT': 'Tyr', 'TGT': 'Cys',
     'TTC': 'Phe', 'TCC': 'Ser', 'TAC': 'Tyr', 'TGC': 'Cys',
@@ -467,6 +477,19 @@ iupac_nt_code = {
     'H': ['A', 'C', 'T'],
     'V': ['A', 'C', 'G'],
     'N': ['A', 'C', 'G', 'T'],
+}
+
+bes = {
+    'ABE': {'fwd': {'REF': 'A', 'ALT': 'G'},
+            'rev': {'REF': 'T', 'ALT': 'C'}},
+    'CBE': {'fwd': {'REF': 'C', 'ALT': 'T'},
+            'rev': {'REF': 'G', 'ALT': 'A'}},
+    'C-to-A': {'fwd': {'REF': 'C', 'ALT': 'A'},
+               'rev': {'REF': 'G', 'ALT': 'T'}},
+    'C-to-G': {'fwd': {'REF': 'C', 'ALT': 'G'},
+               'rev': {'REF': 'G', 'ALT': 'C'}},
+    'T-to-G': {'fwd': {'REF': 'T', 'ALT': 'G'},
+               'rev': {'REF': 'A', 'ALT': 'C'}}
 }
 
 

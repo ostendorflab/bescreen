@@ -61,8 +61,9 @@ def arguments():
                         default=8, type=int)
     parser.add_argument('-l', '--guide-length', help='Length of guide',
                         default=20, type=int)
-    parser.add_argument('-b', '--base-editor', help='Base editor to design guides for',
-                        choices=['both', 'ABE', 'CBE'], default='both', type=str)
+    base_editors = list(shared.bes.keys())
+    parser.add_argument('-b', '--base-editor', help=f"Base editors to design guides for (Available base editors are {', '.join(base_editors)}. Use one or chain multiple using a comma or use 'all' to use all)",
+                        default='all', type=str)
     parser.add_argument('-q', '--window-start-plus', help='Flanking region before the editing window for broader specificity',
                         default=0, type=int)
     parser.add_argument('-w', '--window-end-plus', help='Flanking region after the editing window for broader specificity',
@@ -145,6 +146,8 @@ def arguments():
     if args.annotation_file and not os.path.isfile(args.annotation_file): # for besaturate (should be set as requried now)
         sys.exit('GTF annotation file not found!') # required for besaturate
 
+    if any(be not in base_editors + ['all'] for be in args.base_editor.split(',')):
+        sys.exit('At least one invalid base editor was used!')
 
     # input
 
@@ -156,7 +159,7 @@ def arguments():
     edit_window_start = args.window_start
     edit_window_end = args.window_end
     guidelength = args.guide_length
-    baseeditor = args.base_editor
+    baseeditor = args.base_editor.split(',')
     aspect = args.aspect
     edit_window_start_plus = args.window_start_plus
     edit_window_end_plus = args.window_end_plus

@@ -52,7 +52,7 @@ def guide_blast(guides,
         guides = guides.with_columns(pl.col('indexguide').cast(pl.String))
         guides = guides.with_columns(indexboth = pl.concat_str([pl.col('indexvar'), pl.col('indexguide')], separator='_'))
         guides = guides.with_columns(indexboth_blast = pl.concat_str('>' + pl.col('indexboth')))
-        guides_valid = guides.filter(~pl.col('guide').is_in(['no_be_available', 'no_guides_found']))
+        guides_valid = guides.filter(~pl.col('guide').is_in(['be_not_usable', 'no_guides_found']))
         if guides_valid.is_empty(): # no guides found at all
             blast_results = pl.DataFrame({'blastcount': []})
             return (blast_results)

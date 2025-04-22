@@ -31,21 +31,11 @@ def saturate_region(ref_genome,
                     blast,
                     no_contigs):
 
-    bes = {
-        'ABE': {'fwd': {'REF': 'A', 'ALT': 'G'},
-                'rev': {'REF': 'T', 'ALT': 'C'}},
-        'CBE': {'fwd': {'REF': 'C', 'ALT': 'T'},
-                'rev': {'REF': 'G', 'ALT': 'A'}}
-    }
+    bes = shared.bes
 
     if fiveprimepam:
          # swich fwd and rev for edits
-        bes = {
-            'ABE': {'rev': {'REF': 'A', 'ALT': 'G'},
-                    'fwd': {'REF': 'T', 'ALT': 'C'}},
-            'CBE': {'rev': {'REF': 'C', 'ALT': 'T'},
-                    'fwd': {'REF': 'G', 'ALT': 'A'}}
-        }
+        bes = shared.fiveprimepam_bes(bes)
 
          # switch to reverse PAM
         pamsite = shared.revcom(pamsite)
@@ -60,11 +50,9 @@ def saturate_region(ref_genome,
         edit_window_end_plus = edit_window_start_plus
         edit_window_start_plus = edit_window_start_plus_new
 
-    # modified input
-    if baseeditor == "ABE":
-        del bes['CBE']
-    elif baseeditor == "CBE":
-        del bes['ABE']
+    # select base editors
+    if not 'all' in baseeditor:
+        bes = {key: bes[key] for key in baseeditor}
 
     if input_file:
 
