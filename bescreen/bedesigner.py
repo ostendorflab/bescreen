@@ -1305,7 +1305,7 @@ def design_bes(annotation_file,
             sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("splice_site") | pl.col('consequence').str.contains("SPLICE_SITE"))
             # sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('splice_site_included') == "True" | pl.col('splice_site_included') == "true") # capitalization inconsistent
         if filter_specific:
-            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('specific') == "True" | pl.col('specific') == "true") # capitalization inconsistent
+            sgrnas_to_filter = sgrnas_to_filter.filter((pl.col('specific') == "True") | (pl.col('specific') == "true")) # capitalization inconsistent; == needs parentheses
         if filter_missense:
             sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("missense") | pl.col('consequence').str.contains("MISSENSE"))
         if filter_nonsense:
@@ -1315,14 +1315,14 @@ def design_bes(annotation_file,
         if filter_startlost:
             sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("startlost") | pl.col('consequence').str.contains("STARTLOST"))
 
-        sgrnas_not_to_filter_list = sgrnas_not_to_filter.with_columns(
-                                            pl.concat_str(
-                                                [
-                                                    pl.col("variant"),
-                                                    pl.col("base_editor"),
-                                                ],
-                                                separator="_",
-                                            ).alias("variant_base_editor"))['variant_base_editor'].to_list()
+        # sgrnas_not_to_filter_list = sgrnas_not_to_filter.with_columns(
+        #                                     pl.concat_str(
+        #                                         [
+        #                                             pl.col("variant"),
+        #                                             pl.col("base_editor"),
+        #                                         ],
+        #                                         separator="_",
+        #                                     ).alias("variant_base_editor"))['variant_base_editor'].to_list()
 
         sgrnas_to_filter_list = sgrnas_to_filter.with_columns(
                                             pl.concat_str(
@@ -1333,7 +1333,7 @@ def design_bes(annotation_file,
                                                 separator="_",
                                             ).alias("variant_base_editor"))['variant_base_editor'].to_list()
 
-        sgrnas_after_filter = sgrnas_not_to_filter_list + sgrnas_to_filter_list
+        # sgrnas_after_filter = sgrnas_not_to_filter_list + sgrnas_to_filter_list
 
         sgrnas_filtered_out = sgrnas.with_columns(
                                             pl.concat_str(
@@ -1343,13 +1343,14 @@ def design_bes(annotation_file,
                                                 ],
                                                 separator="_",
                                             ).alias("variant_base_editor")
-                                            ).filter(~pl.col('variant_base_editor').is_in(sgrnas_after_filter)
+                                            # ).filter(~pl.col('variant_base_editor').is_in(sgrnas_after_filter)
+                                            ).filter(~pl.col('variant_base_editor').is_in(sgrnas_to_filter_list)
                                                      ).drop('variant_base_editor')
 
         for col in [filtercol for filtercol in sgrnas_filtered_out.columns if filtercol not in ['variant', 'base_editor', 'strand', 'ref_match']]:
             sgrnas_filtered_out = sgrnas_filtered_out.with_columns(pl.lit("no_guides_found").alias(col))
 
-        sgrnas_not_or_filtered_out = pl.concat([sgrnas_not_to_filter, sgrnas_filtered_out]).unique() # there shouldn't be any duplicates
+        sgrnas_not_or_filtered_out = pl.concat([sgrnas_not_to_filter, sgrnas_filtered_out]).unique() # there shouldn't be any duplicates, but unique() necessary for correct concat
         sgrnas = pl.concat([sgrnas_not_or_filtered_out, sgrnas_to_filter])
 
         sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in (symbols_to_contract + columns_to_modify_last)], maintain_order=True).agg(pl.all()) # revert back to the original form before exploding
