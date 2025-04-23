@@ -63,7 +63,7 @@ def arguments():
                         default=20, type=int)
     base_editors = list(shared.bes.keys())
     parser.add_argument('-b', '--base-editor', help=f"Base editors to design guides for (Available base editors are {', '.join(base_editors)}. Use one or chain multiple using a comma or use 'all' to use all)",
-                        default='all', type=str)
+                        default='ABE,CBE', type=str)
     parser.add_argument('-q', '--window-start-plus', help='Flanking region before the editing window for broader specificity',
                         default=0, type=int)
     parser.add_argument('-w', '--window-end-plus', help='Flanking region after the editing window for broader specificity',
@@ -230,7 +230,7 @@ def arguments():
         if (not '-l' in sys_argvs) and (not '--guide-length' in sys_argvs):
             guidelength = base_editor_presets[be_preset]['guide_length']
         if (not '-b' in sys_argvs) and (not '--base-editor' in sys_argvs):
-            baseeditor = base_editor_presets[be_preset]['class']
+            baseeditor = base_editor_presets[be_preset]['class'].split(',')
         if (not '-q' in sys_argvs) and (not '--window-start-plus' in sys_argvs):
             edit_window_start_plus = base_editor_presets[be_preset]['plus_start']
         if (not '-w' in sys_argvs) and (not '--window-end-plus' in sys_argvs):
