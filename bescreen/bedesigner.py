@@ -487,7 +487,7 @@ def design_bes(annotation_file,
                 aa_positionsss = []
                 splice_sitess_included = []
                 synonymousss = []
-                consequences = []
+                consequencess = []
 
                 count_ingored_N_in_pam = pam_length - len(pam_relevant)
                 count_of_other_in_pam = pam_length - count_ingored_N_in_pam
@@ -570,6 +570,7 @@ def design_bes(annotation_file,
                             codonss_edited = []
                             aass = []
                             aass_edited = []
+                            consequences = []
                             aa_positionss = []
                             splice_sites_included = []
                             synonymouss = []
@@ -588,6 +589,7 @@ def design_bes(annotation_file,
                                 codons_edited = []
                                 aas = []
                                 aas_edited = []
+                                consequence = []
                                 aa_positions = []
                                 includes_splice_site = False
                                 synonymous = False
@@ -672,6 +674,29 @@ def design_bes(annotation_file,
                                                 aa = "codon_incomplete"
                                                 aa_edited = "codon_incomplete"
 
+                                        if aa in non_stop_aas and aa_edited in non_stop_aas and aa != aa_edited:
+                                            consequenc = 'MISSENSE'
+                                        elif aa in non_stop_aas and aa_edited in non_stop_aas and aa == aa_edited:
+                                            consequenc = 'SYNONYMOUS'
+
+                                        elif aa != 'Stop' and aa_edited == 'Stop':
+                                            consequenc = 'STOPGAIN'
+                                        elif aa == 'Stop' and aa_edited != 'Stop':
+                                            consequenc = 'STOPLOST'
+                                        elif aa == 'Stop' and aa_edited == 'Stop': # can this happen?
+                                            consequenc = 'SYNONYMOUS'
+
+                                        elif aa == 'StartM' and aa_edited !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                            consequenc = 'STARTLOST'
+                                        elif aa == 'StartM' and aa_edited =='M': # can't happen
+                                            consequenc = 'SYNONYMOUS'
+
+                                        elif aa == "codon_incomplete" and aa_edited == "codon_incomplete":
+                                            consequenc = 'INDEFINITE'
+
+                                        else: # can this happen?
+                                            consequenc = 'COMPLEX'
+
                                         if len(total_poss) == 1:
                                             if aa == aa_edited:
                                                 synonymous = True
@@ -691,6 +716,7 @@ def design_bes(annotation_file,
                                     elif (row["Start"] - 2) <= edit < (row["End"] + 2):
                                         includes_splice_site = True
                                         synonymous = False
+                                        consequenc = 'SPLICE_SITE'
 
                                         if (row["Start"] - 2) <= edit < row["Start"]:
                                             if row["Strand"] == '+':
@@ -704,6 +730,7 @@ def design_bes(annotation_file,
                                                     aa = "5prime_UTR"
                                                     aa_edited = "5prime_UTR"
                                                     includes_splice_site = False
+                                                    consequenc = 'UTR'
                                             elif row["Strand"] == '-':
                                                 codon = "3prime_splice_site"
                                                 codon_edited = "3prime_splice_site"
@@ -715,6 +742,7 @@ def design_bes(annotation_file,
                                                     aa = "3prime_UTR"
                                                     aa_edited = "3prime_UTR"
                                                     includes_splice_site = False
+                                                    consequenc = 'UTR'
                                         elif row["End"] <= edit < (row["End"] + 2):
                                             if row["Strand"] == '-':
                                                 codon = "5prime_splice_site"
@@ -727,6 +755,7 @@ def design_bes(annotation_file,
                                                     aa = "5prime_UTR"
                                                     aa_edited = "5prime_UTR"
                                                     includes_splice_site = False
+                                                    consequenc = 'UTR'
                                             elif row["Strand"] == '+':
                                                 codon = "3prime_splice_site"
                                                 codon_edited = "3prime_splice_site"
@@ -738,6 +767,7 @@ def design_bes(annotation_file,
                                                     aa = "3prime_UTR"
                                                     aa_edited = "3prime_UTR"
                                                     includes_splice_site = False
+                                                    consequenc = 'UTR'
 
                                         aa_position = aa
 
@@ -746,6 +776,7 @@ def design_bes(annotation_file,
                                         codon_edited = "not_in_CDS"
                                         aa = "not_in_CDS"
                                         aa_edited = "not_in_CDS"
+                                        consequenc = "NOT_CDS"
 
                                         aa_position = aa
 
@@ -754,12 +785,15 @@ def design_bes(annotation_file,
                                         codon_edited = codon_edited.lower()
                                         aa = aa.lower()
                                         aa_edited = aa_edited.lower()
+                                        consequenc = consequenc.lower()
 
                                     # lists for codons and aas per overlapping exons per guide/editing window
                                     codons.append(codon)
                                     codons_edited.append(codon_edited)
                                     aas.append(aa)
                                     aas_edited.append(aa_edited)
+
+                                    consequence.append(consequenc)
 
                                     aa_positions.append(aa_position)
 
@@ -773,6 +807,7 @@ def design_bes(annotation_file,
                                 codonss_edited.append(codons_edited) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
                                 aass.append(aas) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
                                 aass_edited.append(aas_edited) # multiple, categorized by according frame according to transcript_symbol; consider different join character; tuple() not necessary
+                                consequences.append(consequence)
                                 aa_positionss.append(aa_positions)
                                 splice_sites_included.append(str(includes_splice_site)) # str() is necessary for collapsing later, find a better solution
                                 synonymouss.append(str(synonymous)) # str() is necessary for collapsing later, find a better solution
@@ -810,7 +845,8 @@ def design_bes(annotation_file,
                                                     'codonsss': codonss,
                                                     'codonsss_edited': codonss_edited,
                                                     'aasss': aass,
-                                                    'aasss_edited':aass_edited,
+                                                    'aasss_edited': aass_edited,
+                                                    'consequencess': consequences,
                                                     'aa_positionsss': aa_positionss,
                                                     'splice_sitess_included': splice_sites_included,
                                                     'synonymousss': synonymouss})
@@ -818,127 +854,127 @@ def design_bes(annotation_file,
                         # group everything except exon_numberss, transcript_symbolss, first_transcript_exonss, last_transcript_exonss; should or could this be extended
                         annotations = annotations.group_by([col for col in annotations.columns if col not in ['aa_positionsss', 'exon_numberss', 'transcript_symbolss', 'first_transcript_exonss', 'last_transcript_exonss']], maintain_order=True).agg(pl.all())
 
-                        aas_for_filtering = []
-                        for aa_list in annotations['aasss'].to_list():
-                            aas_for_filtering += aa_list
+                        # aas_for_filtering = []
+                        # for aa_list in annotations['aasss'].to_list():
+                        #     aas_for_filtering += aa_list
 
-                        aas_edited_for_filtering = []
-                        for aa_edited_list in annotations['aasss_edited'].to_list():
-                            aas_edited_for_filtering += aa_edited_list
+                        # aas_edited_for_filtering = []
+                        # for aa_edited_list in annotations['aasss_edited'].to_list():
+                        #     aas_edited_for_filtering += aa_edited_list
 
-                        guide_is_missense = False
-                        guide_is_synonymous = False
-                        guide_is_stopgain = False
-                        guide_is_startlost = False
-                        guide_is_stoplost = False
+                        # guide_is_missense = False
+                        # guide_is_synonymous = False
+                        # guide_is_stopgain = False
+                        # guide_is_startlost = False
+                        # guide_is_stoplost = False
 
-                        for i, aa in enumerate(aas_for_filtering):
-                            aa_editied = aas_edited_for_filtering[i]
-                            if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
-                                guide_is_missense = True
-                                # consequence.append('missense')
-                            elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
-                                guide_is_synonymous = True
-                                # consequence.append('synonymous')
+                        # for i, aa in enumerate(aas_for_filtering):
+                        #     aa_edited = aas_edited_for_filtering[i]
+                        #     if aa in non_stop_aas and aa_edited in non_stop_aas and aa != aa_edited:
+                        #         guide_is_missense = True
+                        #         # consequence.append('missense')
+                        #     elif aa in non_stop_aas and aa_edited in non_stop_aas and aa == aa_edited:
+                        #         guide_is_synonymous = True
+                        #         # consequence.append('synonymous')
 
-                            elif aa != 'Stop' and aa_editied == 'Stop':
-                                guide_is_stopgain = True
-                                # consequence.append('stopgain')
-                            elif aa == 'Stop' and aa_editied != 'Stop':
-                                guide_is_stoplost = True
-                                # consequence.append('stoplost')
-                            elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
-                                guide_is_synonymous = True
-                                # consequence.append('synonymous')
+                        #     elif aa != 'Stop' and aa_edited == 'Stop':
+                        #         guide_is_stopgain = True
+                        #         # consequence.append('stopgain')
+                        #     elif aa == 'Stop' and aa_edited != 'Stop':
+                        #         guide_is_stoplost = True
+                        #         # consequence.append('stoplost')
+                        #     elif aa == 'Stop' and aa_edited == 'Stop': # can this happen?
+                        #         guide_is_synonymous = True
+                        #         # consequence.append('synonymous')
 
-                            elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
-                                guide_is_startlost = True
-                                # consequence.append('startlost')
-                            elif aa == 'StartM' and aa_editied =='M': # can't happen
-                                guide_is_synonymous = True
-                                # consequence.append('synonymous')
+                        #     elif aa == 'StartM' and aa_edited !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                        #         guide_is_startlost = True
+                        #         # consequence.append('startlost')
+                        #     elif aa == 'StartM' and aa_edited =='M': # can't happen
+                        #         guide_is_synonymous = True
+                        #         # consequence.append('synonymous')
 
-                            # else: # should not happen; only necessary, if using consequence list
-                            #     consequence.append('complex')
+                        #     # else: # should not happen; only necessary, if using consequence list
+                        #     #     consequence.append('complex')
 
-                        consequence = []
-                        if "True" in annotations['synonymousss'].to_list(): # list always only has 1 element
-                            consequence.append('synonymous')
-                        if "True" in annotations['splice_sitess_included'].to_list(): # list always only has 1 element
-                            consequence.append('splice_site')
-                        if specific:
-                            consequence.append('specific')
-                        if guide_is_missense:
-                            consequence.append('missense')
-                        if guide_is_stopgain:
-                            consequence.append('stopgain')
-                        if guide_is_stoplost:
-                            consequence.append('stoplost')
-                        if guide_is_startlost:
-                            consequence.append('startlost')
-                        if not consequence:
-                            consequence.append('complex')
+                        # consequence = []
+                        # if "True" in annotations['synonymousss'].to_list(): # list always only has 1 element
+                        #     consequence.append('synonymous')
+                        # if "True" in annotations['splice_sitess_included'].to_list(): # list always only has 1 element
+                        #     consequence.append('splice_site')
+                        # if specific:
+                        #     consequence.append('specific')
+                        # if guide_is_missense:
+                        #     consequence.append('missense')
+                        # if guide_is_stopgain:
+                        #     consequence.append('stopgain')
+                        # if guide_is_stoplost:
+                        #     consequence.append('stoplost')
+                        # if guide_is_startlost:
+                        #     consequence.append('startlost')
+                        # if not consequence:
+                        #     consequence.append('complex')
 
-                        if not ((filter_synonymous) and ("True" not in annotations['synonymousss'].to_list()) or # list always only has 1 element
-                                (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or # list always only has 1 element
-                                (filter_specific) and (not specific) or
-                                (filter_missense) and (not guide_is_missense) or
-                                (filter_nonsense) and (not guide_is_stopgain) or
-                                (filter_stoplost) and (not guide_is_stoplost) or
-                                (filter_startlost) and (not guide_is_startlost)):
+                        # if not ((filter_synonymous) and ("True" not in annotations['synonymousss'].to_list()) or # list always only has 1 element
+                        #         (filter_splice_site) and ("True" not in annotations['splice_sitess_included'].to_list()) or # list always only has 1 element
+                        #         (filter_specific) and (not specific) or
+                        #         (filter_missense) and (not guide_is_missense) or
+                        #         (filter_nonsense) and (not guide_is_stopgain) or
+                        #         (filter_stoplost) and (not guide_is_stoplost) or
+                        #         (filter_startlost) and (not guide_is_startlost)):
 
-                            if fiveprimepam:
-                                possible_guide = shared.revcom(possible_guide)
-                                possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
-                                possible_pam = shared.revcom(possible_pam)
-                                edit_window = shared.revcom(edit_window)
-                                edit_window_plus = shared.revcom(edit_window_plus)
-                                safety_region = shared.revcom(safety_region)
-                                edit_string = edit_string[::-1]
-                                edit_pos_string = edit_pos_string[::-1]
-                                distance_median_variant = distance_median_variant[::-1]
-                                distance_median_all = distance_median_all[::-1]
+                        if fiveprimepam:
+                            possible_guide = shared.revcom(possible_guide)
+                            possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                            possible_pam = shared.revcom(possible_pam)
+                            edit_window = shared.revcom(edit_window)
+                            edit_window_plus = shared.revcom(edit_window_plus)
+                            safety_region = shared.revcom(safety_region)
+                            edit_string = edit_string[::-1]
+                            edit_pos_string = edit_pos_string[::-1]
+                            distance_median_variant = distance_median_variant[::-1]
+                            distance_median_all = distance_median_all[::-1]
 
-                            # main fields
-                            possible_guides_with_pam.append(possible_guide_with_pam)
-                            possible_guides.append(possible_guide)
-                            possible_pams.append(possible_pam)
-                            possible_starts.append(str(target_seq_ref_start - guidelength + 1 if rev_com else target_seq_ref_start + 1)) # + 1 to switch to 1-based for SAM file
-                            possible_ends.append(str(target_seq_ref_start + 1 if rev_com else target_seq_ref_start + guidelength + 1)) # + 1 to switch to 1-based for SAM file
-                            possible_chroms.append(str(chrom))
+                        # main fields
+                        possible_guides_with_pam.append(possible_guide_with_pam)
+                        possible_guides.append(possible_guide)
+                        possible_pams.append(possible_pam)
+                        possible_starts.append(str(target_seq_ref_start - guidelength + 1 if rev_com else target_seq_ref_start + 1)) # + 1 to switch to 1-based for SAM file
+                        possible_ends.append(str(target_seq_ref_start + 1 if rev_com else target_seq_ref_start + guidelength + 1)) # + 1 to switch to 1-based for SAM file
+                        possible_chroms.append(str(chrom))
 
-                            # combine annotations, if multiple gene symbol or frames appeared to get annotations per guide
-                            gene_symbolss.append(annotations['gene_symbolss'].to_list()) # consider different join character
-                            transcript_symbolss.append(annotations['transcript_symbolss'].to_list()) # consider different join character
-                            exon_numberss.append(annotations['exon_numberss'].to_list()) # consider different join character
-                            first_transcript_exonss.append(annotations['first_transcript_exonss'].to_list()) # consider different join character
-                            last_transcript_exonss.append(annotations['last_transcript_exonss'].to_list()) # consider different join character
-                            codonsss.append(annotations['codonsss'].to_list()) # consider different join character
-                            codonsss_edited.append(annotations['codonsss_edited'].to_list()) # consider different join character
-                            aasss.append(annotations['aasss'].to_list()) # consider different join character
-                            aasss_edited.append(annotations['aasss_edited'].to_list()) # consider different join character
-                            aa_positionsss.append(annotations['aa_positionsss'].to_list())
-                            splice_sitess_included.append(annotations['splice_sitess_included'].to_list())
-                            synonymousss.append(annotations['synonymousss'].to_list())
-                            consequences.append(consequence)
+                        # combine annotations, if multiple gene symbol or frames appeared to get annotations per guide
+                        gene_symbolss.append(annotations['gene_symbolss'].to_list()) # consider different join character
+                        transcript_symbolss.append(annotations['transcript_symbolss'].to_list()) # consider different join character
+                        exon_numberss.append(annotations['exon_numberss'].to_list()) # consider different join character
+                        first_transcript_exonss.append(annotations['first_transcript_exonss'].to_list()) # consider different join character
+                        last_transcript_exonss.append(annotations['last_transcript_exonss'].to_list()) # consider different join character
+                        codonsss.append(annotations['codonsss'].to_list()) # consider different join character
+                        codonsss_edited.append(annotations['codonsss_edited'].to_list()) # consider different join character
+                        aasss.append(annotations['aasss'].to_list()) # consider different join character
+                        aasss_edited.append(annotations['aasss_edited'].to_list()) # consider different join character
+                        aa_positionsss.append(annotations['aa_positionsss'].to_list())
+                        splice_sitess_included.append(annotations['splice_sitess_included'].to_list())
+                        synonymousss.append(annotations['synonymousss'].to_list())
+                        consequencess.append(annotations['consequencess'].to_list())
 
-                            # lists per variant for shared.analyze_guide()
-                            edit_windows.append(edit_window)
-                            num_editss.append(str(num_edits)) # str() is necessary for collapsing later, find a better solution
-                            specifics.append(str(specific)) # str() is necessary for collapsing later, find a better solution
-                            edit_window_pluss.append(edit_window_plus)
-                            num_edits_pluss.append(str(num_edits_plus)) # str() is necessary for collapsing later, find a better solution
-                            specific_pluss.append(str(specific_plus)) # str() is necessary for collapsing later, find a better solution
-                            safety_regions.append(safety_region)
-                            num_edits_safetys.append(str(num_edits_safety)) # str() is necessary for collapsing later, find a better solution
-                            additional_in_safetys.append(str(additional_in_safety)) # str() is necessary for collapsing later, find a better solution
-                            edit_strings.append(edit_string)
-                            edit_pos_strings.append(edit_pos_string)
-                            specificitys.append(str(specificity)) # str() is necessary for collapsing later, find a better solution
-                            distance_median_variants.append(distance_median_variant)
-                            # quality_scores_variants.append(quality_scores_variant)
-                            distance_median_alls.append(distance_median_all)
-                            # quality_scores_alls.append(quality_scores_all)
+                        # lists per variant for shared.analyze_guide()
+                        edit_windows.append(edit_window)
+                        num_editss.append(str(num_edits)) # str() is necessary for collapsing later, find a better solution
+                        specifics.append(str(specific)) # str() is necessary for collapsing later, find a better solution
+                        edit_window_pluss.append(edit_window_plus)
+                        num_edits_pluss.append(str(num_edits_plus)) # str() is necessary for collapsing later, find a better solution
+                        specific_pluss.append(str(specific_plus)) # str() is necessary for collapsing later, find a better solution
+                        safety_regions.append(safety_region)
+                        num_edits_safetys.append(str(num_edits_safety)) # str() is necessary for collapsing later, find a better solution
+                        additional_in_safetys.append(str(additional_in_safety)) # str() is necessary for collapsing later, find a better solution
+                        edit_strings.append(edit_string)
+                        edit_pos_strings.append(edit_pos_string)
+                        specificitys.append(str(specificity)) # str() is necessary for collapsing later, find a better solution
+                        distance_median_variants.append(distance_median_variant)
+                        # quality_scores_variants.append(quality_scores_variant)
+                        distance_median_alls.append(distance_median_all)
+                        # quality_scores_alls.append(quality_scores_all)
 
                     # decreasing variant position for next loop; is there a more direct way? This seems unintuitive
                     variant_position -= 1
@@ -961,7 +997,7 @@ def design_bes(annotation_file,
                     num_edits_safetys.append("no_guides_found")
                     additional_in_safetys.append("no_guides_found")
                     synonymousss.append(["no_guides_found"])
-                    consequences.append(["no_guides_found"])
+                    consequencess.append([["no_guides_found"]])
                     codonsss.append([["no_guides_found"]])
                     codonsss_edited.append([["no_guides_found"]])
                     aasss.append([["no_guides_found"]])
@@ -1030,7 +1066,7 @@ def design_bes(annotation_file,
                 all_aa_positionss.append(aa_positionsss) # list
                 all_splice_sites_included.append(splice_sitess_included)
                 all_synonymouss.append(synonymousss)
-                all_consequences.append(consequences)
+                all_consequences.append(consequencess)
                 all_guide_starts.append(possible_starts)
                 all_guide_ends.append(possible_ends)
                 all_chroms.append(possible_chroms)
@@ -1079,7 +1115,7 @@ def design_bes(annotation_file,
                 all_aa_positionss.append([[[["be_not_usable"]]]])
                 all_splice_sites_included.append([["be_not_usable"]])
                 all_synonymouss.append([["be_not_usable"]])
-                all_consequences.append([["be_not_usable"]])
+                all_consequences.append([[["be_not_usable"]]])
                 all_guide_starts.append(["be_not_usable"])
                 all_guide_ends.append(["be_not_usable"])
                 all_chroms.append(["be_not_usable"])
@@ -1246,12 +1282,78 @@ def design_bes(annotation_file,
         pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.eval(pl.element().list.join("~")).list.join("^")),
         pl.col(variant_cols_to_modify_first).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("^")), # this separator should be something different (the first one; old comment?)
         pl.col(splice_sites_to_modify).list.eval(pl.element().list.join("^")), # splice_site_included on same level as transcript groups
-        pl.col(consequences_to_modify).list.eval(pl.element().list.join("&")) # consequences on same level as transcript groups
+        pl.col(consequences_to_modify).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("^")) # consequences on same level as transcript groups
     )
 
     if allpossible:
         all_variant = sgrnas['variant'].to_list()
         sgrnas = sgrnas.with_columns(pl.Series('variant', [f'{all_variant[i]}({all_variant_real[i]})' if all_variant[i].split(':')[-1] != all_variant_real[i] else all_variant[i] for i in range(len(all_variant))]))
+
+    if any_filter: # avoid the massive transformations, if no filtering is applied
+        sgrnas_columns = sgrnas.columns
+        sgrnas = sgrnas.explode(symbols_to_contract + columns_to_modify_last)
+
+        sgrnas_not_to_filter = sgrnas.filter((pl.col("guide").cast(str) == "no_guides_found") | # editbale, but no guides found
+                                             (pl.col("guide").cast(str) == "be_not_usable")) # not editable
+
+        sgrnas_to_filter = sgrnas.filter((pl.col("guide").cast(str) != "no_guides_found") & # editbale, but no guides found
+                                         (pl.col("guide").cast(str) != "be_not_usable")) # not editable
+
+        if filter_synonymous:
+            sgrnas_to_filter = sgrnas_to_filter.filter(~(pl.col('synonymous').str.contains("False") | pl.col('synonymous').str.contains("false"))) # capitalization inconsistent
+        if filter_splice_site:
+            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("splice_site") | pl.col('consequence').str.contains("SPLICE_SITE"))
+            # sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('splice_site_included') == "True" | pl.col('splice_site_included') == "true") # capitalization inconsistent
+        if filter_specific:
+            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('specific') == "True" | pl.col('specific') == "true") # capitalization inconsistent
+        if filter_missense:
+            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("missense") | pl.col('consequence').str.contains("MISSENSE"))
+        if filter_nonsense:
+            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("stopgain") | pl.col('consequence').str.contains("STOPGAIN"))
+        if filter_stoplost:
+            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("stoplost") | pl.col('consequence').str.contains("STOPLOST"))
+        if filter_startlost:
+            sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("startlost") | pl.col('consequence').str.contains("STARTLOST"))
+
+        sgrnas_not_to_filter_list = sgrnas_not_to_filter.with_columns(
+                                            pl.concat_str(
+                                                [
+                                                    pl.col("variant"),
+                                                    pl.col("base_editor"),
+                                                ],
+                                                separator="_",
+                                            ).alias("variant_base_editor"))['variant_base_editor'].to_list()
+
+        sgrnas_to_filter_list = sgrnas_to_filter.with_columns(
+                                            pl.concat_str(
+                                                [
+                                                    pl.col("variant"),
+                                                    pl.col("base_editor"),
+                                                ],
+                                                separator="_",
+                                            ).alias("variant_base_editor"))['variant_base_editor'].to_list()
+
+        sgrnas_after_filter = sgrnas_not_to_filter_list + sgrnas_to_filter_list
+
+        sgrnas_filtered_out = sgrnas.with_columns(
+                                            pl.concat_str(
+                                                [
+                                                    pl.col("variant"),
+                                                    pl.col("base_editor"),
+                                                ],
+                                                separator="_",
+                                            ).alias("variant_base_editor")
+                                            ).filter(~pl.col('variant_base_editor').is_in(sgrnas_after_filter)
+                                                     ).drop('variant_base_editor')
+
+        for col in [filtercol for filtercol in sgrnas_filtered_out.columns if filtercol not in ['variant', 'base_editor', 'strand', 'ref_match']]:
+            sgrnas_filtered_out = sgrnas_filtered_out.with_columns(pl.lit("no_guides_found").alias(col))
+
+        sgrnas_not_or_filtered_out = pl.concat([sgrnas_not_to_filter, sgrnas_filtered_out]).unique() # there shouldn't be any duplicates
+        sgrnas = pl.concat([sgrnas_not_or_filtered_out, sgrnas_to_filter])
+
+        sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in (symbols_to_contract + columns_to_modify_last)], maintain_order=True).agg(pl.all()) # revert back to the original form before exploding
+        sgrnas = sgrnas[sgrnas_columns] # column order changes during the process
 
     if aspect == 'exploded': # one line per guide
         sgrnas = sgrnas.explode(symbols_to_contract + columns_to_modify_last) # explode per guide (and the associated columns)

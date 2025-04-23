@@ -275,6 +275,7 @@ def saturate_bes(annotation_file,
                         codons_edited = [] # reset variant list for sliding window
                         aas = [] # reset variant list for sliding window
                         aas_edited = [] # reset variant list for sliding window
+                        consequence = [] # reset variant list for sliding window
                         aa_positions = [] # reset variant list for sliding window
                         # includes_splice_site = "not_tested" # also check for splice-sites even, if not explicitely added
                         # if splice_sites:
@@ -385,6 +386,31 @@ def saturate_bes(annotation_file,
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
 
+                                        if aa in non_stop_aas and aa_edited in non_stop_aas and aa != aa_edited:
+                                            consequenc = 'missense'
+                                        elif aa in non_stop_aas and aa_edited in non_stop_aas and aa == aa_edited:
+                                            consequenc = 'synonymous'
+
+                                        elif aa != 'Stop' and aa_edited == 'Stop':
+                                            consequenc = 'stopgain'
+                                        elif aa == 'Stop' and aa_edited != 'Stop':
+                                            consequenc = 'stoplost'
+                                        elif aa == 'Stop' and aa_edited == 'Stop': # can this happen?
+                                            consequenc = 'synonymous'
+
+                                        elif aa == 'StartM' and aa_edited !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                            consequenc = 'startlost'
+                                        elif aa == 'StartM' and aa_edited =='M': # can't happen
+                                            consequenc = 'synonymous'
+
+                                        elif aa == "codon_incomplete" and aa_edited == "codon_incomplete":
+                                            consequenc = 'indefinite'
+
+                                        else: # can this happen?
+                                            consequenc = 'complex'
+
+                                        consequence.append(consequenc)
+
                                         if row['Strand'] == "+":
                                             nt_position = row['transcript_length_before'] + ((pos + 1) - row['Start'])
                                             aa_position = -(-nt_position // 3)
@@ -416,6 +442,7 @@ def saturate_bes(annotation_file,
                                         # if splice_sites: # also check for splice-sites even, if not explicitely added
                                             # variants.append(f'{row["Chromosome"]}_{pos + 1}_{ref_genome_pyfaidx[row["Chromosome"]][pos]}_{bes[be]["fwd"]["ALT"]}') # append variant to variantlist 1-based as VCF
                                             includes_splice_site = True
+                                            consequenc = 'splice_site'
 
                                             if (row["Start"] - 2) <= pos < row["Start"]:
                                                 if row["Strand"] == '+':
@@ -429,6 +456,7 @@ def saturate_bes(annotation_file,
                                                         aa = "5prime_UTR"
                                                         aa_edited = "5prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
                                                 elif row["Strand"] == '-':
                                                     codon = "3prime_splice_site"
                                                     codon_edited = "3prime_splice_site"
@@ -440,6 +468,7 @@ def saturate_bes(annotation_file,
                                                         aa = "3prime_UTR"
                                                         aa_edited = "3prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
                                             elif row["End"] <= pos < (row["End"] + 2):
                                                 if row["Strand"] == '-':
                                                     codon = "5prime_splice_site"
@@ -452,6 +481,7 @@ def saturate_bes(annotation_file,
                                                         aa = "5prime_UTR"
                                                         aa_edited = "5prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
                                                 elif row["Strand"] == '+':
                                                     codon = "3prime_splice_site"
                                                     codon_edited = "3prime_splice_site"
@@ -463,11 +493,14 @@ def saturate_bes(annotation_file,
                                                         aa = "3prime_UTR"
                                                         aa_edited = "3prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
 
                                             codons.append(codon)
                                             codons_edited.append(codon_edited)
                                             aas.append(aa)
                                             aas_edited.append(aa_edited)
+
+                                            consequence.append(consequenc)
 
                                             aa_positions.append(aa)
 
@@ -494,6 +527,7 @@ def saturate_bes(annotation_file,
                                         codon_edited = "intron"
                                         aa = "intron"
                                         aa_edited = "intron"
+                                        consequenc = "intron"
 
                                         if pos < (row["Start"] - 2):
                                             if row["Strand"] == '+' and exon_number == first_transcript_exon:
@@ -501,11 +535,13 @@ def saturate_bes(annotation_file,
                                                 codon_edited = "5prime_UTR"
                                                 aa = "5prime_UTR"
                                                 aa_edited = "5prime_UTR"
+                                                consequenc = 'utr'
                                             elif row["Strand"] == '-' and exon_number == last_transcript_exon:
                                                 codon = "3prime_UTR"
                                                 codon_edited = "3prime_UTR"
                                                 aa = "3prime_UTR"
                                                 aa_edited = "3prime_UTR"
+                                                consequenc = 'utr'
 
                                         elif (row["End"] + 2) <= pos:
                                             if row["Strand"] == '-' and exon_number == first_transcript_exon:
@@ -513,16 +549,20 @@ def saturate_bes(annotation_file,
                                                 codon_edited = "5prime_UTR"
                                                 aa = "5prime_UTR"
                                                 aa_edited = "5prime_UTR"
+                                                consequenc = 'utr'
                                             elif row["Strand"] == '+' and exon_number == last_transcript_exon:
                                                 codon = "3prime_UTR"
                                                 codon_edited = "3prime_UTR"
                                                 aa = "3prime_UTR"
                                                 aa_edited = "3prime_UTR"
+                                                consequenc = 'utr'
 
                                         codons.append(codon)
                                         codons_edited.append(codon_edited)
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
+
+                                        consequence.append(consequenc)
 
                                         aa_positions.append(aa)
                                         synonymous = False
@@ -565,115 +605,115 @@ def saturate_bes(annotation_file,
                             #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
                             #     raise Exception("output of analyze_guide() wrong in forward search")
 
-                            guide_is_missense = False
-                            guide_is_synonymous = False
-                            guide_is_stopgain = False
-                            guide_is_startlost = False
-                            guide_is_stoplost = False
+                            # guide_is_missense = False
+                            # guide_is_synonymous = False
+                            # guide_is_stopgain = False
+                            # guide_is_startlost = False
+                            # guide_is_stoplost = False
 
-                            for i, aa in enumerate(aas):
-                                aa_editied = aas_edited[i]
-                                if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
-                                    guide_is_missense = True
-                                    # consequence.append('missense')
-                                elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
-                                    guide_is_synonymous = True
-                                    # consequence.append('synonymous')
+                            # for i, aa in enumerate(aas):
+                            #     aa_edited = aas_edited[i]
+                            #     if aa in non_stop_aas and aa_edited in non_stop_aas and aa != aa_edited:
+                            #         guide_is_missense = True
+                            #         # consequence.append('missense')
+                            #     elif aa in non_stop_aas and aa_edited in non_stop_aas and aa == aa_edited:
+                            #         guide_is_synonymous = True
+                            #         # consequence.append('synonymous')
 
-                                elif aa != 'Stop' and aa_editied == 'Stop':
-                                    guide_is_stopgain = True
-                                    # consequence.append('stopgain')
-                                elif aa == 'Stop' and aa_editied != 'Stop':
-                                    guide_is_stoplost = True
-                                    # consequence.append('stoplost')
-                                elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
-                                    guide_is_synonymous = True
-                                    # consequence.append('synonymous')
+                            #     elif aa != 'Stop' and aa_edited == 'Stop':
+                            #         guide_is_stopgain = True
+                            #         # consequence.append('stopgain')
+                            #     elif aa == 'Stop' and aa_edited != 'Stop':
+                            #         guide_is_stoplost = True
+                            #         # consequence.append('stoplost')
+                            #     elif aa == 'Stop' and aa_edited == 'Stop': # can this happen?
+                            #         guide_is_synonymous = True
+                            #         # consequence.append('synonymous')
 
-                                elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
-                                    guide_is_startlost = True
-                                    # consequence.append('startlost')
-                                elif aa == 'StartM' and aa_editied =='M': # can't happen
-                                    guide_is_synonymous = True
-                                    # consequence.append('synonymous')
+                            #     elif aa == 'StartM' and aa_edited !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                            #         guide_is_startlost = True
+                            #         # consequence.append('startlost')
+                            #     elif aa == 'StartM' and aa_edited =='M': # can't happen
+                            #         guide_is_synonymous = True
+                            #         # consequence.append('synonymous')
 
-                                # else: # should not happen; only necessary, if using consequence list
-                                #     consequence.append('complex')
+                            #     # else: # should not happen; only necessary, if using consequence list
+                            #     #     consequence.append('complex')
 
-                            consequence = []
-                            if synonymous:
-                                consequence.append('synonymous')
-                            if includes_splice_site:
-                                consequence.append('splice_site')
-                            if specific:
-                                consequence.append('specific')
-                            if guide_is_missense:
-                                consequence.append('missense')
-                            if guide_is_stopgain:
-                                consequence.append('stopgain')
-                            if guide_is_stoplost:
-                                consequence.append('stoplost')
-                            if guide_is_startlost:
-                                consequence.append('startlost')
-                            if not consequence:
-                                consequence.append('complex')
+                            # consequence = []
+                            # if synonymous:
+                            #     consequence.append('synonymous')
+                            # if includes_splice_site:
+                            #     consequence.append('splice_site')
+                            # if specific:
+                            #     consequence.append('specific')
+                            # if guide_is_missense:
+                            #     consequence.append('missense')
+                            # if guide_is_stopgain:
+                            #     consequence.append('stopgain')
+                            # if guide_is_stoplost:
+                            #     consequence.append('stoplost')
+                            # if guide_is_startlost:
+                            #     consequence.append('startlost')
+                            # if not consequence:
+                            #     consequence.append('complex')
 
-                            if not ((filter_synonymous) and (not synonymous) or
-                                    (filter_splice_site) and (not includes_splice_site) or
-                                    (filter_specific) and (not specific) or
-                                    (filter_missense) and (not guide_is_missense) or
-                                    (filter_nonsense) and (not guide_is_stopgain) or
-                                    (filter_stoplost) and (not guide_is_stoplost) or
-                                    (filter_startlost) and (not guide_is_startlost)):
+                            # if not ((filter_synonymous) and (not synonymous) or
+                            #         (filter_splice_site) and (not includes_splice_site) or
+                            #         (filter_specific) and (not specific) or
+                            #         (filter_missense) and (not guide_is_missense) or
+                            #         (filter_nonsense) and (not guide_is_stopgain) or
+                            #         (filter_stoplost) and (not guide_is_stoplost) or
+                            #         (filter_startlost) and (not guide_is_startlost)):
 
-                                if fiveprimepam:
-                                    possible_guide = shared.revcom(possible_guide)
-                                    possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
-                                    edit_window_bases = shared.revcom(edit_window_bases)
-                                    edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
-                                    safety_region = shared.revcom(safety_region)
-                                    edit_string = edit_string[::-1]
-                                    edit_pos_string = edit_pos_string[::-1]
-                                    distance_median_all = distance_median_all[::-1]
+                            if fiveprimepam:
+                                possible_guide = shared.revcom(possible_guide)
+                                possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                edit_window_bases = shared.revcom(edit_window_bases)
+                                edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                safety_region = shared.revcom(safety_region)
+                                edit_string = edit_string[::-1]
+                                edit_pos_string = edit_pos_string[::-1]
+                                distance_median_all = distance_median_all[::-1]
 
-                                symbol_output.append(gene_symbol)
-                                transcript_output.append(transcript_symbol)
-                                be_output.append(be)
-                                variant_output.append(variants) # list
-                                guide_output.append(possible_guide)
-                                guide_with_pam_output.append(possible_guide_with_pam)
-                                edit_window_output.append(edit_window_bases)
-                                guide_output_strand.append(possible_guide)
-                                guide_with_pam_output_strand.append(possible_guide_with_pam)
-                                edit_window_output_strand.append(edit_window_bases)
-                                specific_output.append(specific)
-                                edit_window_plus_output.append(edit_window_plus_bases)
-                                edit_window_plus_output_strand.append(edit_window_plus_bases)
-                                specific_plus_output.append(specific_plus)
-                                synonymous_output.append(synonymous)
-                                consequence_output.append(consequence)
-                                direction_output.append('+' if not fiveprimepam else '-') # forward
-                                codon_ref.append(codons) # list
-                                aa_ref.append(aas) # list
-                                aa_pos.append(aa_positions)
-                                codon_edit.append(codons_edited) # list
-                                aa_edit.append(aas_edited) # list
-                                splice_site_included.append(includes_splice_site)
-                                exon_number_output.append(exon_number)
-                                first_transcript_exon_output.append(first_transcript_exon)
-                                last_transcript_exon_output.append(last_transcript_exon)
-                                num_edits_output.append(num_edits)
-                                num_edits_plus_output.append(num_edits_plus)
-                                safety_region_output.append(safety_region)
-                                num_edits_safety_output.append(num_edits_safety)
-                                additional_in_safety_output.append(additional_in_safety)
-                                edit_string_output.append(edit_string)
-                                edit_pos_string_output.append(edit_pos_string)
-                                distance_median_all_output.append(distance_median_all)
-                                # quality_scores_all_output.append(quality_scores_all)
-                                guide_starts_output.append(str(startpos_fwd + 1))
-                                guide_ends_output.append(str(startpos_fwd + guidelength + 1))
-                                chroms_output.append(str(chrom))
+                            symbol_output.append(gene_symbol)
+                            transcript_output.append(transcript_symbol)
+                            be_output.append(be)
+                            variant_output.append(variants) # list
+                            guide_output.append(possible_guide)
+                            guide_with_pam_output.append(possible_guide_with_pam)
+                            edit_window_output.append(edit_window_bases)
+                            guide_output_strand.append(possible_guide)
+                            guide_with_pam_output_strand.append(possible_guide_with_pam)
+                            edit_window_output_strand.append(edit_window_bases)
+                            specific_output.append(specific)
+                            edit_window_plus_output.append(edit_window_plus_bases)
+                            edit_window_plus_output_strand.append(edit_window_plus_bases)
+                            specific_plus_output.append(specific_plus)
+                            synonymous_output.append(synonymous)
+                            consequence_output.append(consequence)
+                            direction_output.append('+' if not fiveprimepam else '-') # forward
+                            codon_ref.append(codons) # list
+                            aa_ref.append(aas) # list
+                            aa_pos.append(aa_positions)
+                            codon_edit.append(codons_edited) # list
+                            aa_edit.append(aas_edited) # list
+                            splice_site_included.append(includes_splice_site)
+                            exon_number_output.append(exon_number)
+                            first_transcript_exon_output.append(first_transcript_exon)
+                            last_transcript_exon_output.append(last_transcript_exon)
+                            num_edits_output.append(num_edits)
+                            num_edits_plus_output.append(num_edits_plus)
+                            safety_region_output.append(safety_region)
+                            num_edits_safety_output.append(num_edits_safety)
+                            additional_in_safety_output.append(additional_in_safety)
+                            edit_string_output.append(edit_string)
+                            edit_pos_string_output.append(edit_pos_string)
+                            distance_median_all_output.append(distance_median_all)
+                            # quality_scores_all_output.append(quality_scores_all)
+                            guide_starts_output.append(str(startpos_fwd + 1))
+                            guide_ends_output.append(str(startpos_fwd + guidelength + 1))
+                            chroms_output.append(str(chrom))
 
                     else:
                         if bes[be]['fwd']['REF'] in edit_window_plus_bases:
@@ -733,6 +773,7 @@ def saturate_bes(annotation_file,
                         codons_edited = [] # reset variant list for sliding window
                         aas = [] # reset variant list for sliding window
                         aas_edited = [] # reset variant list for sliding window
+                        consequence = [] # reset variant list for sliding window
                         aa_positions = [] # reset variant list for sliding window
                         # includes_splice_site = "not_tested" # also check for splice-sites even, if not explicitely added
                         # if splice_sites:
@@ -843,6 +884,31 @@ def saturate_bes(annotation_file,
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
 
+                                        if aa in non_stop_aas and aa_edited in non_stop_aas and aa != aa_edited:
+                                            consequenc = 'missense'
+                                        elif aa in non_stop_aas and aa_edited in non_stop_aas and aa == aa_edited:
+                                            consequenc = 'synonymous'
+
+                                        elif aa != 'Stop' and aa_edited == 'Stop':
+                                            consequenc = 'stopgain'
+                                        elif aa == 'Stop' and aa_edited != 'Stop':
+                                            consequenc = 'stoplost'
+                                        elif aa == 'Stop' and aa_edited == 'Stop': # can this happen?
+                                            consequenc = 'synonymous'
+
+                                        elif aa == 'StartM' and aa_edited !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                                            consequenc = 'startlost'
+                                        elif aa == 'StartM' and aa_edited =='M': # can't happen
+                                            consequenc = 'synonymous'
+
+                                        elif aa == "codon_incomplete" and aa_edited == "codon_incomplete":
+                                            consequenc = 'indefinite'
+
+                                        else: # can this happen?
+                                            consequenc = 'complex'
+
+                                        consequence.append(consequenc)
+
                                         if row['Strand'] == "+":
                                             nt_position = row['transcript_length_before'] + ((pos + 1) - row['Start'])
                                             aa_position = -(-nt_position // 3)
@@ -874,6 +940,7 @@ def saturate_bes(annotation_file,
                                         # if splice_sites: # also check for splice-sites even, if not explicitely added
                                             # variants.append(f'{row["Chromosome"]}_{pos + 1}_{ref_genome_pyfaidx[row["Chromosome"]][pos]}_{bes[be]["rev"]["ALT"]}') # append variant to variantlist 1-based as VCF
                                             includes_splice_site = True
+                                            consequenc = 'splice_site'
 
                                             if (row["Start"] - 2) <= pos < row["Start"]:
                                                 if row["Strand"] == '+':
@@ -887,6 +954,7 @@ def saturate_bes(annotation_file,
                                                         aa = "5prime_UTR"
                                                         aa_edited = "5prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
                                                 elif row["Strand"] == '-':
                                                     codon = "3prime_splice_site"
                                                     codon_edited = "3prime_splice_site"
@@ -898,6 +966,7 @@ def saturate_bes(annotation_file,
                                                         aa = "3prime_UTR"
                                                         aa_edited = "3prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
                                             elif row["End"] <= pos < (row["End"] + 2):
                                                 if row["Strand"] == '-':
                                                     codon = "5prime_splice_site"
@@ -910,6 +979,7 @@ def saturate_bes(annotation_file,
                                                         aa = "5prime_UTR"
                                                         aa_edited = "5prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
                                                 elif row["Strand"] == '+':
                                                     codon = "3prime_splice_site"
                                                     codon_edited = "3prime_splice_site"
@@ -921,11 +991,14 @@ def saturate_bes(annotation_file,
                                                         aa = "3prime_UTR"
                                                         aa_edited = "3prime_UTR"
                                                         includes_splice_site = False
+                                                        consequenc = 'utr'
 
                                             codons.append(codon)
                                             codons_edited.append(codon_edited)
                                             aas.append(aa)
                                             aas_edited.append(aa_edited)
+
+                                            consequence.append(consequenc)
 
                                             aa_positions.append(aa)
 
@@ -952,6 +1025,7 @@ def saturate_bes(annotation_file,
                                         codon_edited = "intron"
                                         aa = "intron"
                                         aa_edited = "intron"
+                                        consequenc = "intron"
 
                                         if pos < (row["Start"] - 2):
                                             if row["Strand"] == '+' and exon_number == first_transcript_exon:
@@ -959,11 +1033,13 @@ def saturate_bes(annotation_file,
                                                 codon_edited = "5prime_UTR"
                                                 aa = "5prime_UTR"
                                                 aa_edited = "5prime_UTR"
+                                                consequenc = "utr"
                                             elif row["Strand"] == '-' and exon_number == last_transcript_exon:
                                                 codon = "3prime_UTR"
                                                 codon_edited = "3prime_UTR"
                                                 aa = "3prime_UTR"
                                                 aa_edited = "3prime_UTR"
+                                                consequenc = "utr"
 
                                         elif (row["End"] + 2) <= pos:
                                             if row["Strand"] == '-' and exon_number == first_transcript_exon:
@@ -971,16 +1047,20 @@ def saturate_bes(annotation_file,
                                                 codon_edited = "5prime_UTR"
                                                 aa = "5prime_UTR"
                                                 aa_edited = "5prime_UTR"
+                                                consequenc = "utr"
                                             elif row["Strand"] == '+' and exon_number == last_transcript_exon:
                                                 codon = "3prime_UTR"
                                                 codon_edited = "3prime_UTR"
                                                 aa = "3prime_UTR"
                                                 aa_edited = "3prime_UTR"
+                                                consequenc = "utr"
 
                                         codons.append(codon)
                                         codons_edited.append(codon_edited)
                                         aas.append(aa)
                                         aas_edited.append(aa_edited)
+
+                                        consequence.append(consequenc)
 
                                         aa_positions.append(aa)
                                         synonymous = False
@@ -1026,115 +1106,115 @@ def saturate_bes(annotation_file,
                             #     edit_window_plus_bases_unused != edit_window_plus_bases): # just for testing purposes; can be removed later
                             #     raise Exception("output of analyze_guide() wrong in reverse search")
 
-                            guide_is_missense = False
-                            guide_is_synonymous = False
-                            guide_is_stopgain = False
-                            guide_is_startlost = False
-                            guide_is_stoplost = False
+                            # guide_is_missense = False
+                            # guide_is_synonymous = False
+                            # guide_is_stopgain = False
+                            # guide_is_startlost = False
+                            # guide_is_stoplost = False
 
-                            for i, aa in enumerate(aas):
-                                aa_editied = aas_edited[i]
-                                if aa in non_stop_aas and aa_editied in non_stop_aas and aa != aa_editied:
-                                    guide_is_missense = True
-                                    # consequence.append('missense')
-                                elif aa in non_stop_aas and aa_editied in non_stop_aas and aa == aa_editied:
-                                    guide_is_synonymous = True
-                                    # consequence.append('synonymous')
+                            # for i, aa in enumerate(aas):
+                            #     aa_edited = aas_edited[i]
+                            #     if aa in non_stop_aas and aa_edited in non_stop_aas and aa != aa_edited:
+                            #         guide_is_missense = True
+                            #         # consequence.append('missense')
+                            #     elif aa in non_stop_aas and aa_edited in non_stop_aas and aa == aa_edited:
+                            #         guide_is_synonymous = True
+                            #         # consequence.append('synonymous')
 
-                                elif aa != 'Stop' and aa_editied == 'Stop':
-                                    guide_is_stopgain = True
-                                    # consequence.append('stopgain')
-                                elif aa == 'Stop' and aa_editied != 'Stop':
-                                    guide_is_stoplost = True
-                                    # consequence.append('stoplost')
-                                elif aa == 'Stop' and aa_editied == 'Stop': # can this happen?
-                                    guide_is_synonymous = True
-                                    # consequence.append('synonymous')
+                            #     elif aa != 'Stop' and aa_edited == 'Stop':
+                            #         guide_is_stopgain = True
+                            #         # consequence.append('stopgain')
+                            #     elif aa == 'Stop' and aa_edited != 'Stop':
+                            #         guide_is_stoplost = True
+                            #         # consequence.append('stoplost')
+                            #     elif aa == 'Stop' and aa_edited == 'Stop': # can this happen?
+                            #         guide_is_synonymous = True
+                            #         # consequence.append('synonymous')
 
-                                elif aa == 'StartM' and aa_editied !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
-                                    guide_is_startlost = True
-                                    # consequence.append('startlost')
-                                elif aa == 'StartM' and aa_editied =='M': # can't happen
-                                    guide_is_synonymous = True
-                                    # consequence.append('synonymous')
+                            #     elif aa == 'StartM' and aa_edited !='M': # StartM not used in aas_edited yet; Any edit in StartM would be a startlost
+                            #         guide_is_startlost = True
+                            #         # consequence.append('startlost')
+                            #     elif aa == 'StartM' and aa_edited =='M': # can't happen
+                            #         guide_is_synonymous = True
+                            #         # consequence.append('synonymous')
 
-                                # else: # should not happen; only necessary, if using consequence list
-                                #     consequence.append('complex')
+                            #     # else: # should not happen; only necessary, if using consequence list
+                            #     #     consequence.append('complex')
 
-                            consequence = []
-                            if synonymous:
-                                consequence.append('synonymous')
-                            if includes_splice_site:
-                                consequence.append('splice_site')
-                            if specific:
-                                consequence.append('specific')
-                            if guide_is_missense:
-                                consequence.append('missense')
-                            if guide_is_stopgain:
-                                consequence.append('stopgain')
-                            if guide_is_stoplost:
-                                consequence.append('stoplost')
-                            if guide_is_startlost:
-                                consequence.append('startlost')
-                            if not consequence:
-                                consequence.append('complex')
+                            # consequence = []
+                            # if synonymous:
+                            #     consequence.append('synonymous')
+                            # if includes_splice_site:
+                            #     consequence.append('splice_site')
+                            # if specific:
+                            #     consequence.append('specific')
+                            # if guide_is_missense:
+                            #     consequence.append('missense')
+                            # if guide_is_stopgain:
+                            #     consequence.append('stopgain')
+                            # if guide_is_stoplost:
+                            #     consequence.append('stoplost')
+                            # if guide_is_startlost:
+                            #     consequence.append('startlost')
+                            # if not consequence:
+                            #     consequence.append('complex')
 
-                            if not ((filter_synonymous) and (not synonymous) or
-                                    (filter_splice_site) and (not includes_splice_site) or
-                                    (filter_specific) and (not specific) or
-                                    (filter_missense) and (not guide_is_missense) or
-                                    (filter_nonsense) and (not guide_is_stopgain) or
-                                    (filter_stoplost) and (not guide_is_stoplost) or
-                                    (filter_startlost) and (not guide_is_startlost)):
+                            # if not ((filter_synonymous) and (not synonymous) or
+                            #         (filter_splice_site) and (not includes_splice_site) or
+                            #         (filter_specific) and (not specific) or
+                            #         (filter_missense) and (not guide_is_missense) or
+                            #         (filter_nonsense) and (not guide_is_stopgain) or
+                            #         (filter_stoplost) and (not guide_is_stoplost) or
+                            #         (filter_startlost) and (not guide_is_startlost)):
 
-                                if fiveprimepam:
-                                    possible_guide = shared.revcom(possible_guide)
-                                    possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
-                                    edit_window_bases = shared.revcom(edit_window_bases)
-                                    edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
-                                    safety_region = shared.revcom(safety_region)
-                                    edit_string = edit_string[::-1]
-                                    edit_pos_string = edit_pos_string[::-1]
-                                    distance_median_all = distance_median_all[::-1]
+                            if fiveprimepam:
+                                possible_guide = shared.revcom(possible_guide)
+                                possible_guide_with_pam = shared.revcom(possible_guide_with_pam)
+                                edit_window_bases = shared.revcom(edit_window_bases)
+                                edit_window_plus_bases = shared.revcom(edit_window_plus_bases)
+                                safety_region = shared.revcom(safety_region)
+                                edit_string = edit_string[::-1]
+                                edit_pos_string = edit_pos_string[::-1]
+                                distance_median_all = distance_median_all[::-1]
 
-                                symbol_output.append(gene_symbol)
-                                transcript_output.append(transcript_symbol)
-                                be_output.append(be)
-                                variant_output.append(variants) # list
-                                guide_output.append(shared.revcom(possible_guide))
-                                guide_with_pam_output.append(shared.revcom(possible_guide_with_pam))
-                                edit_window_output.append(shared.revcom(edit_window_bases))
-                                guide_output_strand.append(possible_guide)
-                                guide_with_pam_output_strand.append(possible_guide_with_pam)
-                                edit_window_output_strand.append(edit_window_bases)
-                                specific_output.append(specific)
-                                edit_window_plus_output.append(shared.revcom(edit_window_plus_bases))
-                                edit_window_plus_output_strand.append(edit_window_plus_bases)
-                                specific_plus_output.append(specific_plus)
-                                synonymous_output.append(synonymous)
-                                consequence_output.append(consequence)
-                                direction_output.append('-' if not fiveprimepam else '+') # reverse
-                                codon_ref.append(codons) # list
-                                aa_ref.append(aas) # list
-                                aa_pos.append(aa_positions)
-                                codon_edit.append(codons_edited) # list
-                                aa_edit.append(aas_edited) # list
-                                splice_site_included.append(includes_splice_site)
-                                exon_number_output.append(exon_number)
-                                first_transcript_exon_output.append(first_transcript_exon)
-                                last_transcript_exon_output.append(last_transcript_exon)
-                                num_edits_output.append(num_edits)
-                                num_edits_plus_output.append(num_edits_plus)
-                                safety_region_output.append(shared.revcom(safety_region))
-                                num_edits_safety_output.append(num_edits_safety)
-                                additional_in_safety_output.append(additional_in_safety)
-                                edit_string_output.append(edit_string)
-                                edit_pos_string_output.append(edit_pos_string)
-                                distance_median_all_output.append(distance_median_all)
-                                # quality_scores_all_output.append(quality_scores_all)
-                                guide_starts_output.append(str(startpos_rev + len(pamsite) + 1))
-                                guide_ends_output.append(str(startpos_rev + guidelength + len(pamsite) + 1))
-                                chroms_output.append(str(chrom))
+                            symbol_output.append(gene_symbol)
+                            transcript_output.append(transcript_symbol)
+                            be_output.append(be)
+                            variant_output.append(variants) # list
+                            guide_output.append(shared.revcom(possible_guide))
+                            guide_with_pam_output.append(shared.revcom(possible_guide_with_pam))
+                            edit_window_output.append(shared.revcom(edit_window_bases))
+                            guide_output_strand.append(possible_guide)
+                            guide_with_pam_output_strand.append(possible_guide_with_pam)
+                            edit_window_output_strand.append(edit_window_bases)
+                            specific_output.append(specific)
+                            edit_window_plus_output.append(shared.revcom(edit_window_plus_bases))
+                            edit_window_plus_output_strand.append(edit_window_plus_bases)
+                            specific_plus_output.append(specific_plus)
+                            synonymous_output.append(synonymous)
+                            consequence_output.append(consequence)
+                            direction_output.append('-' if not fiveprimepam else '+') # reverse
+                            codon_ref.append(codons) # list
+                            aa_ref.append(aas) # list
+                            aa_pos.append(aa_positions)
+                            codon_edit.append(codons_edited) # list
+                            aa_edit.append(aas_edited) # list
+                            splice_site_included.append(includes_splice_site)
+                            exon_number_output.append(exon_number)
+                            first_transcript_exon_output.append(first_transcript_exon)
+                            last_transcript_exon_output.append(last_transcript_exon)
+                            num_edits_output.append(num_edits)
+                            num_edits_plus_output.append(num_edits_plus)
+                            safety_region_output.append(shared.revcom(safety_region))
+                            num_edits_safety_output.append(num_edits_safety)
+                            additional_in_safety_output.append(additional_in_safety)
+                            edit_string_output.append(edit_string)
+                            edit_pos_string_output.append(edit_pos_string)
+                            distance_median_all_output.append(distance_median_all)
+                            # quality_scores_all_output.append(quality_scores_all)
+                            guide_starts_output.append(str(startpos_rev + len(pamsite) + 1))
+                            guide_ends_output.append(str(startpos_rev + guidelength + len(pamsite) + 1))
+                            chroms_output.append(str(chrom))
 
                     else:
                         if bes[be]['rev']['REF'] in edit_window_plus_bases:
@@ -1276,6 +1356,7 @@ def saturate_bes(annotation_file,
                                                                             'last_transcript_exon']],
                                 maintain_order=True).agg(pl.all())
         sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in ['synonymous',
+                                                                            'consequence',
                                                                             'codon_ref',
                                                                             'aa_ref',
                                                                             'aa_pos',
@@ -1335,11 +1416,49 @@ def saturate_bes(annotation_file,
 
             variant_cols_to_modify_second += variants_vep_resorted.columns # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
 
+        if filter_synonymous:
+            sgrnas = sgrnas.filter(~(pl.col('synonymous').list.join("^").str.contains("false") | pl.col('synonymous').list.join("^").str.contains("False"))) # capitalization inconsistent
+        if filter_splice_site:
+            sgrnas = sgrnas.filter(pl.col('consequence').list.eval(pl.element().list.join(";")).list.join("^").str.contains("splice_site"))
+            # sgrnas = sgrnas.filter(pl.col('splice_site_included').list.join("^").str.contains("true"))
+        if filter_specific:
+            sgrnas = sgrnas.filter(pl.col('specific'))
+        if filter_missense:
+            sgrnas = sgrnas.filter(pl.col('consequence').list.eval(pl.element().list.join(";")).list.join("^").str.contains("missense"))
+        if filter_nonsense:
+            sgrnas = sgrnas.filter(pl.col('consequence').list.eval(pl.element().list.join(";")).list.join("^").str.contains("stopgain"))
+        if filter_stoplost:
+            sgrnas = sgrnas.filter(pl.col('consequence').list.eval(pl.element().list.join(";")).list.join("^").str.contains("stoplost"))
+        if filter_startlost:
+            sgrnas = sgrnas.filter(pl.col('consequence').list.eval(pl.element().list.join(";")).list.join("^").str.contains("startlost"))
+
         if aspect == 'exploded': # maybe also show off target edits in codons in small letters as for bedesigner
+
             sgrnas = sgrnas.with_columns(
-                pl.col(aa_pos_to_modify_very_first).list.eval(pl.element().list.eval(pl.element().list.join(";")).list.join("~")).list.join("^"),
+                pl.col(aa_pos_to_modify_very_first).map_batches(lambda s:
+                    s.to_frame()
+                    .with_row_index("outer_row")
+                    .explode(pl.last())
+                    .with_row_index("row")
+                    .explode(pl.last())
+                    .with_row_index()
+                    .explode(pl.last())
+                    .with_columns(pl.int_ranges(pl.col("index").rle().struct.field("len")).flatten().alias("index"))
+                    .group_by("index", "row", "outer_row", maintain_order=True)
+                    .agg(pl.last())
+                    .group_by("row", "outer_row", maintain_order=True)
+                    .agg(pl.last())
+                    .group_by("outer_row", maintain_order=True)
+                    .agg(pl.last())
+                    .select(pl.last())
+                    .to_series()))
+
+            sgrnas = sgrnas.with_columns(
+                pl.col(aa_pos_to_modify_very_first).list.eval(pl.element().list.eval(pl.element().list.join("~"))))
+
+            sgrnas = sgrnas.with_columns(
                 pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.join("~")).list.join("^"),
-                pl.col(variant_cols_to_modify_first).map_batches(lambda s:
+                pl.col(variant_cols_to_modify_first + aa_pos_to_modify_very_first).map_batches(lambda s:
                     s.to_frame()
                     .with_row_index("row")
                     .explode(pl.last())
@@ -1353,9 +1472,9 @@ def saturate_bes(annotation_file,
                     .select(pl.last())
                     .to_series() # this transposes the columns in variant_cols_to_modify_first
                     .list.eval(pl.element().list.join("^"))),
-                pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first]).list.join("^"),
-                pl.col(consequences_to_modify).list.join("&")
-            ).explode(variant_cols_to_modify_second + variant_cols_to_modify_first)
+                pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first + aa_pos_to_modify_very_first]).list.join("^"),
+                pl.col(consequences_to_modify).list.eval(pl.element().list.join(";")).list.join("^")
+            ).explode(variant_cols_to_modify_second + variant_cols_to_modify_first + aa_pos_to_modify_very_first)
 
         elif aspect == 'collapsed':
             sgrnas = sgrnas.with_columns(
@@ -1364,7 +1483,7 @@ def saturate_bes(annotation_file,
                 pl.col(variant_cols_to_modify_first).list.eval(pl.element().list.join(";")).list.join("^"),
                 pl.col(variant_cols_to_modify_second).list.join(";"),
                 pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first]).list.join("^"),
-                pl.col(consequences_to_modify).list.join("&")
+                pl.col(consequences_to_modify).list.eval(pl.element().list.join(";")).list.join("^")
             )
 
         sgrnas = sgrnas.unique().sort(by=sgrnas.columns)
@@ -1493,6 +1612,7 @@ def saturate_bes(annotation_file,
                                                                                     'last_transcript_exon']],
                                         maintain_order=True).agg(pl.all().str.join("~"))
         sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['synonymous', # 'aa_pos' shouldn't be necessary here, since it's not set
+                                                                                    'consequence',
                                                                                     'codon_ref',
                                                                                     'aa_ref',
                                                                                     'codon_edit',
