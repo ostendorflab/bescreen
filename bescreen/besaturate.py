@@ -1458,7 +1458,7 @@ def saturate_bes(annotation_file,
 
             sgrnas = sgrnas.with_columns(
                 pl.col(transcript_cols_to_modify_first).list.eval(pl.element().list.join("~")).list.join("^"),
-                pl.col(variant_cols_to_modify_first + aa_pos_to_modify_very_first).map_batches(lambda s:
+                pl.col(variant_cols_to_modify_first + aa_pos_to_modify_very_first + consequences_to_modify).map_batches(lambda s:
                     s.to_frame()
                     .with_row_index("row")
                     .explode(pl.last())
@@ -1473,8 +1473,7 @@ def saturate_bes(annotation_file,
                     .to_series() # this transposes the columns in variant_cols_to_modify_first
                     .list.eval(pl.element().list.join("^"))),
                 pl.col([col for col in transcript_cols_to_modify_second if col not in transcript_cols_to_modify_first + variant_cols_to_modify_first + aa_pos_to_modify_very_first]).list.join("^"),
-                pl.col(consequences_to_modify).list.eval(pl.element().list.join(";")).list.join("^")
-            ).explode(variant_cols_to_modify_second + variant_cols_to_modify_first + aa_pos_to_modify_very_first)
+            ).explode(variant_cols_to_modify_second + variant_cols_to_modify_first + aa_pos_to_modify_very_first + consequences_to_modify)
 
         elif aspect == 'collapsed':
             sgrnas = sgrnas.with_columns(
