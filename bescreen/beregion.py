@@ -115,7 +115,7 @@ def saturate_region(ref_genome,
     additional_in_safety_output = []
     edit_string_output = []
     edit_pos_string_output = []
-    distance_median_all_output = []
+    distance_to_center_output = []
     # quality_scores_all_output = []
     guide_starts_output = []
     guide_ends_output = []
@@ -228,8 +228,8 @@ def saturate_region(ref_genome,
                                 edit_string, \
                                 edit_pos_string, \
                                 specificity_unused, \
-                                distance_median_variant_unused, \
-                                distance_median_all = shared.analyze_guide(possible_guide,
+                                distance_to_center_variant_unused, \
+                                distance_to_center = shared.analyze_guide(possible_guide,
                                                                         edit_window_start,
                                                                         edit_window_end,
                                                                         edit_window_start_plus,
@@ -240,7 +240,7 @@ def saturate_region(ref_genome,
                                                                         fiveprimepam)
                                 # the following lines have been removed from the statement above:
                                 # quality_scores_variant_unused, \
-                                # distance_median_all, \
+                                # distance_to_center, \
                                 # quality_scores_all = shared.analyze_guide(possible_guide,
                                                                         # distance_median_dict,
                                                                         # quality_scores_dict) # _unused variables just for testing purposes; can be removed later
@@ -257,7 +257,7 @@ def saturate_region(ref_genome,
                                     safety_region = shared.revcom(safety_region)
                                     edit_string = edit_string[::-1]
                                     edit_pos_string = edit_pos_string[::-1]
-                                    distance_median_all = distance_median_all[::-1]
+                                    distance_to_center = distance_to_center[::-1]
 
                                 be_output.append(be)
                                 variant_output.append(variants) # list
@@ -279,7 +279,7 @@ def saturate_region(ref_genome,
                                 additional_in_safety_output.append(additional_in_safety)
                                 edit_string_output.append(edit_string)
                                 edit_pos_string_output.append(edit_pos_string)
-                                distance_median_all_output.append(distance_median_all)
+                                distance_to_center_output.append(distance_to_center)
                                 # quality_scores_all_output.append(quality_scores_all)
                                 guide_starts_output.append(str(startpos_fwd + 1))
                                 guide_ends_output.append(str(startpos_fwd + guidelength + 1))
@@ -368,8 +368,8 @@ def saturate_region(ref_genome,
                                 edit_string, \
                                 edit_pos_string, \
                                 specificity_unused, \
-                                distance_median_variant_unused, \
-                                distance_median_all = shared.analyze_guide(shared.revcom(possible_guide),
+                                distance_to_center_variant_unused, \
+                                distance_to_center = shared.analyze_guide(shared.revcom(possible_guide),
                                                                         edit_window_start,
                                                                         edit_window_end,
                                                                         edit_window_start_plus,
@@ -380,7 +380,7 @@ def saturate_region(ref_genome,
                                                                         fiveprimepam)
                                 # the following lines have been removed from the statement above:
                                 # quality_scores_variant_unused, \
-                                # distance_median_all, \
+                                # distance_to_center, \
                                 # quality_scores_all = shared.analyze_guide(shared.revcom(possible_guide),
                                                                         # distance_median_dict,
                                                                         # quality_scores_dict) # _unused variables just for testing purposes; can be removed later
@@ -400,7 +400,7 @@ def saturate_region(ref_genome,
                                     safety_region = shared.revcom(safety_region)
                                     edit_string = edit_string[::-1]
                                     edit_pos_string = edit_pos_string[::-1]
-                                    distance_median_all = distance_median_all[::-1]
+                                    distance_to_center = distance_to_center[::-1]
 
                                 be_output.append(be)
                                 variant_output.append(variants) # list
@@ -422,7 +422,7 @@ def saturate_region(ref_genome,
                                 additional_in_safety_output.append(additional_in_safety)
                                 edit_string_output.append(edit_string)
                                 edit_pos_string_output.append(edit_pos_string)
-                                distance_median_all_output.append(distance_median_all)
+                                distance_to_center_output.append(distance_to_center)
                                 # quality_scores_all_output.append(quality_scores_all)
                                 guide_starts_output.append(str(startpos_rev + len(pamsite) + 1))
                                 guide_ends_output.append(str(startpos_rev + guidelength + len(pamsite) + 1))
@@ -489,8 +489,8 @@ def saturate_region(ref_genome,
                             "strand": direction_output,
                             "off_target_bases": edit_string_output,
                             "edited_positions": edit_pos_string_output,
-                            "distance_median_all": distance_median_all_output})
-                            # "distance_median_all": distance_median_all_output,
+                            "distance_to_center": distance_to_center_output})
+                            # "distance_to_center": distance_to_center_output,
                             # "efficiency_scores_all": quality_scores_all_output})
 
         if blast:

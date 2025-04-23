@@ -166,7 +166,7 @@ def saturate_bes(annotation_file,
     additional_in_safety_output = []
     edit_string_output = []
     edit_pos_string_output = []
-    distance_median_all_output = []
+    distance_to_center_output = []
     # quality_scores_all_output = []
     guide_starts_output = []
     guide_ends_output = []
@@ -584,8 +584,8 @@ def saturate_bes(annotation_file,
                             edit_string, \
                             edit_pos_string, \
                             specificity_unused, \
-                            distance_median_variant_unused, \
-                            distance_median_all = shared.analyze_guide(possible_guide,
+                            distance_to_center_variant_unused, \
+                            distance_to_center = shared.analyze_guide(possible_guide,
                                                                       edit_window_start,
                                                                       edit_window_end,
                                                                       edit_window_start_plus,
@@ -596,7 +596,7 @@ def saturate_bes(annotation_file,
                                                                       fiveprimepam)
                             # the following lines have been removed from the statement above:
                             # quality_scores_variant_unused, \
-                            # distance_median_all, \
+                            # distance_to_center, \
                             # quality_scores_all = shared.analyze_guide(possible_guide,
                                                                     #   distance_median_dict,
                                                                     #   quality_scores_dict) # _unused variables just for testing purposes; can be removed later
@@ -674,7 +674,7 @@ def saturate_bes(annotation_file,
                                 safety_region = shared.revcom(safety_region)
                                 edit_string = edit_string[::-1]
                                 edit_pos_string = edit_pos_string[::-1]
-                                distance_median_all = distance_median_all[::-1]
+                                distance_to_center = distance_to_center[::-1]
 
                             symbol_output.append(gene_symbol)
                             transcript_output.append(transcript_symbol)
@@ -709,7 +709,7 @@ def saturate_bes(annotation_file,
                             additional_in_safety_output.append(additional_in_safety)
                             edit_string_output.append(edit_string)
                             edit_pos_string_output.append(edit_pos_string)
-                            distance_median_all_output.append(distance_median_all)
+                            distance_to_center_output.append(distance_to_center)
                             # quality_scores_all_output.append(quality_scores_all)
                             guide_starts_output.append(str(startpos_fwd + 1))
                             guide_ends_output.append(str(startpos_fwd + guidelength + 1))
@@ -1082,8 +1082,8 @@ def saturate_bes(annotation_file,
                             edit_string, \
                             edit_pos_string, \
                             specificity_unused, \
-                            distance_median_variant_unused, \
-                            distance_median_all = shared.analyze_guide(shared.revcom(possible_guide),
+                            distance_to_center_variant_unused, \
+                            distance_to_center = shared.analyze_guide(shared.revcom(possible_guide),
                                                                       edit_window_start,
                                                                       edit_window_end,
                                                                       edit_window_start_plus,
@@ -1094,7 +1094,7 @@ def saturate_bes(annotation_file,
                                                                       fiveprimepam)
                             # the following lines have been removed from the statement above:
                             # quality_scores_variant_unused, \
-                            # distance_median_all, \
+                            # distance_to_center, \
                             # quality_scores_all = shared.analyze_guide(shared.revcom(possible_guide),
                                                                     #   distance_median_dict,
                                                                     #   quality_scores_dict) # _unused variables just for testing purposes; can be removed later
@@ -1175,7 +1175,7 @@ def saturate_bes(annotation_file,
                                 safety_region = shared.revcom(safety_region)
                                 edit_string = edit_string[::-1]
                                 edit_pos_string = edit_pos_string[::-1]
-                                distance_median_all = distance_median_all[::-1]
+                                distance_to_center = distance_to_center[::-1]
 
                             symbol_output.append(gene_symbol)
                             transcript_output.append(transcript_symbol)
@@ -1210,7 +1210,7 @@ def saturate_bes(annotation_file,
                             additional_in_safety_output.append(additional_in_safety)
                             edit_string_output.append(edit_string)
                             edit_pos_string_output.append(edit_pos_string)
-                            distance_median_all_output.append(distance_median_all)
+                            distance_to_center_output.append(distance_to_center)
                             # quality_scores_all_output.append(quality_scores_all)
                             guide_starts_output.append(str(startpos_rev + len(pamsite) + 1))
                             guide_ends_output.append(str(startpos_rev + guidelength + len(pamsite) + 1))
@@ -1319,9 +1319,9 @@ def saturate_bes(annotation_file,
                             "off_target_bases": edit_string_output,
                             "edited_positions": edit_pos_string_output,
                             "specificity":  "NA_for_genes",
-                            "distance_median_variant":  "NA_for_genes",
+                            "distance_to_center_variant":  "NA_for_genes",
                             # "efficiency_scores_variant":  "NA_for_genes",
-                            "distance_median_all": distance_median_all_output,
+                            "distance_to_center": distance_to_center_output,
                             # "efficiency_scores_all": quality_scores_all_output,
                             "transcript": transcript_output,
                             "exon_number": exon_number_output,
@@ -1536,8 +1536,8 @@ def saturate_bes(annotation_file,
                             'ref_match',
                             'off_target_bases',
                             'specificity',
-                            'distance_median_variant'])
-                            # 'distance_median_variant',
+                            'distance_to_center_variant'])
+                            # 'distance_to_center_variant',
                             # 'efficiency_scores_variant'])
 
         if edit_window_start_plus == 0 and edit_window_end_plus == 0:
@@ -1586,9 +1586,9 @@ def saturate_bes(annotation_file,
                                 "off_target_bases": "NA_for_non_editing_guides",
                                 "edited_positions": "NA_for_non_editing_guides",
                                 "specificity": "NA_for_genes",
-                                "distance_median_variant": "NA_for_genes",
+                                "distance_to_center_variant": "NA_for_genes",
                                 # "efficiency_scores_variant": "NA_for_genes",
-                                "distance_median_all": "NA_for_non_editing_guides",
+                                "distance_to_center": "NA_for_non_editing_guides",
                                 # "efficiency_scores_all": "NA_for_non_editing_guides",
                                 "transcript": transcript_output_ne,
                                 "exon_number": exon_number_output_ne,
@@ -1703,10 +1703,10 @@ def saturate_bes(annotation_file,
                                     'off_target_bases',
                                     'edited_positions',
                                     'specificity',
-                                    'distance_median_variant',
-                                    'distance_median_all'])
+                                    'distance_to_center_variant',
+                                    'distance_to_center'])
                                     # 'efficiency_scores_variant',
-                                    # 'distance_median_all',
+                                    # 'distance_to_center',
                                     # 'efficiency_scores_all'])
 
         if edit_window_start_plus == 0 and edit_window_end_plus == 0:

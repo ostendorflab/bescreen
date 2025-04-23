@@ -102,25 +102,25 @@ def analyze_guide(guide,
     # onesd_quality = twosd_quality / 2
 
     # # quality for variant
-    # distance_median_variant = [abs(edit_pos-median_edit_window) for edit_pos in variant_edits_pos]
-    distance_median_variant = [distance_median_dict[edit_pos] for edit_pos in variant_edits_pos]
+    # distance_to_center_variant = [abs(edit_pos-median_edit_window) for edit_pos in variant_edits_pos]
+    distance_to_center_variant = [distance_median_dict[edit_pos] for edit_pos in variant_edits_pos]
     # quality_scores_variant = norm.pdf(variant_edits_pos, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))
     # quality_scores_variant = [quality_scores_dict[edit_pos] for edit_pos in variant_edits_pos]
 
     # # quality for all edits
-    # distance_median_all = [abs(edit_pos-median_edit_window) for edit_pos in all_edits_pos]
-    distance_median_all = [distance_median_dict[edit_pos] for edit_pos in all_edits_pos]
+    # distance_to_center = [abs(edit_pos-median_edit_window) for edit_pos in all_edits_pos]
+    distance_to_center = [distance_median_dict[edit_pos] for edit_pos in all_edits_pos]
     # quality_scores_all = norm.pdf(all_edits_pos, median_edit_window, onesd_quality) * (1 / norm.pdf(median_edit_window, median_edit_window, onesd_quality))
     # quality_scores_all = [quality_scores_dict[edit_pos] for edit_pos in all_edits_pos]
 
-    distance_median_variant = [str(number) if not fiveprimepam else str(number)[::-1] for number in distance_median_variant]
+    distance_to_center_variant = [str(number) if not fiveprimepam else str(number)[::-1] for number in distance_to_center_variant]
     # quality_scores_variant = [str(round(float(number), 2)) for number in quality_scores_variant]
-    distance_median_all = [str(number) if not fiveprimepam else str(number)[::-1] for number in distance_median_all]
+    distance_to_center = [str(number) if not fiveprimepam else str(number)[::-1] for number in distance_to_center]
     # quality_scores_all = [str(round(float(number), 2)) for number in quality_scores_all]
 
-    distance_median_variant = ",".join(distance_median_variant)
+    distance_to_center_variant = ",".join(distance_to_center_variant)
     # quality_scores_variant = ",".join(quality_scores_variant)
-    distance_median_all = ",".join(distance_median_all)
+    distance_to_center = ",".join(distance_to_center)
     # quality_scores_all = ",".join(quality_scores_all)
 
     return (edit_window,
@@ -135,10 +135,10 @@ def analyze_guide(guide,
             string_edits,
             string_edit_poss,
             specificty,
-            distance_median_variant,
+            distance_to_center_variant,
             # quality_scores_variant,
-            distance_median_all)
-            # distance_median_all,
+            distance_to_center)
+            # distance_to_center,
             # quality_scores_all)
 
 

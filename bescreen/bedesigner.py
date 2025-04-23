@@ -156,9 +156,9 @@ def design_bes(annotation_file,
     all_num_edits_safety = []
     all_additional_in_safety = []
     all_specificity = []
-    all_distance_median_variant = []
+    all_distance_to_center_variant = []
     # all_quality_scores_variant = []
-    all_distance_median_all = []
+    all_distance_to_center = []
     # all_quality_scores_all = []
 
     # final lists for manual annotation
@@ -469,9 +469,9 @@ def design_bes(annotation_file,
                 num_edits_safetys = []
                 additional_in_safetys = []
                 specificitys = []
-                distance_median_variants = []
+                distance_to_center_variants = []
                 # quality_scores_variants = []
-                distance_median_alls = []
+                distance_to_centers = []
                 # quality_scores_alls = []
 
                 # lists per variant for manual annotation
@@ -522,8 +522,8 @@ def design_bes(annotation_file,
                         edit_string, \
                         edit_pos_string, \
                         specificity, \
-                        distance_median_variant, \
-                        distance_median_all = shared.analyze_guide(possible_guide,
+                        distance_to_center_variant, \
+                        distance_to_center = shared.analyze_guide(possible_guide,
                                                                 position_edit_window_start,
                                                                 position_edit_window_end,
                                                                 edit_window_start_plus,
@@ -534,7 +534,7 @@ def design_bes(annotation_file,
                                                                 fiveprimepam)
                         # the following lines have been removed from the statement above:
                         # quality_scores_variant, \
-                        # distance_median_all, \
+                        # distance_to_center, \
                         # quality_scores_all = shared.analyze_guide(possible_guide,
                                                                 #   distance_median_dict,
                                                                 #   quality_scores_dict)
@@ -932,8 +932,8 @@ def design_bes(annotation_file,
                             safety_region = shared.revcom(safety_region)
                             edit_string = edit_string[::-1]
                             edit_pos_string = edit_pos_string[::-1]
-                            distance_median_variant = distance_median_variant[::-1]
-                            distance_median_all = distance_median_all[::-1]
+                            distance_to_center_variant = distance_to_center_variant[::-1]
+                            distance_to_center = distance_to_center[::-1]
 
                         # main fields
                         possible_guides_with_pam.append(possible_guide_with_pam)
@@ -971,9 +971,9 @@ def design_bes(annotation_file,
                         edit_strings.append(edit_string)
                         edit_pos_strings.append(edit_pos_string)
                         specificitys.append(str(specificity)) # str() is necessary for collapsing later, find a better solution
-                        distance_median_variants.append(distance_median_variant)
+                        distance_to_center_variants.append(distance_to_center_variant)
                         # quality_scores_variants.append(quality_scores_variant)
-                        distance_median_alls.append(distance_median_all)
+                        distance_to_centers.append(distance_to_center)
                         # quality_scores_alls.append(quality_scores_all)
 
                     # decreasing variant position for next loop; is there a more direct way? This seems unintuitive
@@ -1007,9 +1007,9 @@ def design_bes(annotation_file,
                     edit_strings.append("no_guides_found")
                     edit_pos_strings.append("no_guides_found")
                     specificitys.append("no_guides_found")
-                    distance_median_variants.append("no_guides_found")
+                    distance_to_center_variants.append("no_guides_found")
                     # quality_scores_variants.append("no_guides_found")
-                    distance_median_alls.append("no_guides_found")
+                    distance_to_centers.append("no_guides_found")
                     # quality_scores_alls.append("no_guides_found")
                     transcript_symbolss.append([["no_guides_found"]])
                     exon_numberss.append([["no_guides_found"]])
@@ -1050,9 +1050,9 @@ def design_bes(annotation_file,
                 all_num_edits_safety.append(num_edits_safetys)
                 all_additional_in_safety.append(additional_in_safetys)
                 all_specificity.append(specificitys) # list
-                all_distance_median_variant.append(distance_median_variants) # list
+                all_distance_to_center_variant.append(distance_to_center_variants) # list
                 # all_quality_scores_variant.append(quality_scores_variants) # list
-                all_distance_median_all.append(distance_median_alls) # list
+                all_distance_to_center.append(distance_to_centers) # list
                 # all_quality_scores_all.append(quality_scores_alls) # list
                 all_gene_symbols.append(gene_symbolss) # list
                 all_transcript_symbols.append(transcript_symbolss) # list
@@ -1099,9 +1099,9 @@ def design_bes(annotation_file,
                 all_num_edits_safety.append(["be_not_usable"])
                 all_additional_in_safety.append(["be_not_usable"])
                 all_specificity.append(["be_not_usable"])
-                all_distance_median_variant.append(["be_not_usable"])
+                all_distance_to_center_variant.append(["be_not_usable"])
                 # all_quality_scores_variant.append(["be_not_usable"])
-                all_distance_median_all.append(["be_not_usable"])
+                all_distance_to_center.append(["be_not_usable"])
                 # all_quality_scores_all.append(["be_not_usable"])
                 all_gene_symbols.append([["be_not_usable"]])
                 all_transcript_symbols.append([[["be_not_usable"]]])
@@ -1153,9 +1153,9 @@ def design_bes(annotation_file,
                            "off_target_bases": all_edit_strings,
                            "edited_positions": all_edit_pos_strings,
                            "specificity": all_specificity,
-                           "distance_median_variant": all_distance_median_variant,
+                           "distance_to_center_variant": all_distance_to_center_variant,
                         #    "efficiency_scores_variant": all_quality_scores_variant,
-                           "distance_median_all": all_distance_median_all,
+                           "distance_to_center": all_distance_to_center,
                         #    "efficiency_scores_all": all_quality_scores_all,
                            "transcript": all_transcript_symbols,
                            "exon_number": all_exon_numbers,
