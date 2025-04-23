@@ -1139,7 +1139,7 @@ def design_bes(annotation_file,
                            "num_edits_safety": all_num_edits_safety,
                            "additional_in_safety": all_additional_in_safety,
                            "ne_plus": "NA_for_variants",
-                           "synonymous": all_synonymouss,
+                           "synonymous_specific": all_synonymouss,
                            "consequence": all_consequences,
                            "strand": all_rev_com,
                            "codon_ref": all_codonss,
@@ -1247,7 +1247,7 @@ def design_bes(annotation_file,
     symbols_to_contract = ['symbol']
 
     splice_sites_to_modify = ['splice_site_included',
-                              'synonymous']
+                              'synonymous_specific']
 
     consequences_to_modify = ['consequence']
 
@@ -1300,7 +1300,7 @@ def design_bes(annotation_file,
                                          (pl.col("guide").cast(str) != "be_not_usable")) # not editable
 
         if filter_synonymous:
-            sgrnas_to_filter = sgrnas_to_filter.filter(~(pl.col('synonymous').str.contains("False") | pl.col('synonymous').str.contains("false"))) # capitalization inconsistent
+            sgrnas_to_filter = sgrnas_to_filter.filter(~(pl.col('synonymous_specific').str.contains("False") | pl.col('synonymous_specific').str.contains("false"))) # capitalization inconsistent
         if filter_splice_site:
             sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("splice_site") | pl.col('consequence').str.contains("SPLICE_SITE"))
             # sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('splice_site_included') == "True" | pl.col('splice_site_included') == "true") # capitalization inconsistent

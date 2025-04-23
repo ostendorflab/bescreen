@@ -1272,7 +1272,7 @@ def saturate_bes(annotation_file,
 
     variant_cols_to_modify_second = ['variant']
 
-    transcript_cols_to_modify_second = ['synonymous',
+    transcript_cols_to_modify_second = ['synonymous_specific',
                                         'codon_ref',
                                         'aa_ref',
                                         'codon_edit',
@@ -1305,7 +1305,7 @@ def saturate_bes(annotation_file,
                             "num_edits_safety": num_edits_safety_output,
                             "additional_in_safety": additional_in_safety_output,
                             "ne_plus": "NA_for_editing_guides",
-                            "synonymous": synonymous_output,
+                            "synonymous_specific": synonymous_output,
                             "consequence": consequence_output,
                             "strand": direction_output,
                             "codon_ref": codon_ref,
@@ -1336,7 +1336,7 @@ def saturate_bes(annotation_file,
         sgrnas = sgrnas.with_columns(exon_number = sgrnas['exon_number'].cast(int).cast(str))
         sgrnas = sgrnas.with_columns(first_transcript_exon = sgrnas['first_transcript_exon'].cast(int).cast(str))
         sgrnas = sgrnas.with_columns(last_transcript_exon = sgrnas['last_transcript_exon'].cast(int).cast(str))
-        sgrnas = sgrnas.with_columns(synonymous = sgrnas['synonymous'].cast(str))
+        sgrnas = sgrnas.with_columns(synonymous = sgrnas['synonymous_specific'].cast(str))
         sgrnas = sgrnas.with_columns(splice_site_included = sgrnas['splice_site_included'].cast(str))
         sgrnas = sgrnas.with_columns(variant = sgrnas['variant'])
         sgrnas = sgrnas.with_columns(codon_ref = sgrnas['codon_ref'])
@@ -1355,7 +1355,7 @@ def saturate_bes(annotation_file,
                                                                             'first_transcript_exon',
                                                                             'last_transcript_exon']],
                                 maintain_order=True).agg(pl.all())
-        sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in ['synonymous',
+        sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in ['synonymous_specific',
                                                                             'consequence',
                                                                             'codon_ref',
                                                                             'aa_ref',
@@ -1417,7 +1417,7 @@ def saturate_bes(annotation_file,
             variant_cols_to_modify_second += variants_vep_resorted.columns # if vep for sgrnas_ne put into use, needs to be integrated into sgrnas_ne block
 
         if filter_synonymous:
-            sgrnas = sgrnas.filter(~(pl.col('synonymous').list.join("^").str.contains("false") | pl.col('synonymous').list.join("^").str.contains("False"))) # capitalization inconsistent
+            sgrnas = sgrnas.filter(~(pl.col('synonymous_specific').list.join("^").str.contains("false") | pl.col('synonymous_specific').list.join("^").str.contains("False"))) # capitalization inconsistent
         if filter_splice_site:
             sgrnas = sgrnas.filter(pl.col('consequence').list.eval(pl.element().list.join(";")).list.join("^").str.contains("splice_site"))
             # sgrnas = sgrnas.filter(pl.col('splice_site_included').list.join("^").str.contains("true"))
@@ -1572,7 +1572,7 @@ def saturate_bes(annotation_file,
                                 "num_edits_safety": "NA_for_non_editing_guides",
                                 "additional_in_safety": "NA_for_non_editing_guides",
                                 "ne_plus": ne_plus_output_ne,
-                                "synonymous": "NA_for_non_editing_guides",
+                                "synonymous_specific": "NA_for_non_editing_guides",
                                 "consequence": "NA_for_non_editing_guides",
                                 "strand": direction_output_ne,
                                 "codon_ref": "NA_for_non_editing_guides",
@@ -1603,14 +1603,14 @@ def saturate_bes(annotation_file,
         sgrnas_ne = sgrnas_ne.with_columns(exon_number = sgrnas_ne['exon_number'].cast(int).cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(first_transcript_exon = sgrnas_ne['first_transcript_exon'].cast(int).cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(last_transcript_exon = sgrnas_ne['last_transcript_exon'].cast(int).cast(str))
-        sgrnas_ne = sgrnas_ne.with_columns(synonymous = sgrnas_ne['synonymous'].cast(str))
+        sgrnas_ne = sgrnas_ne.with_columns(synonymous = sgrnas_ne['synonymous_specific'].cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(splice_site_included = sgrnas_ne['splice_site_included'].cast(str))
         sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['exon_number', # 'aa_pos' shouldn't be necessary here, since it's not set
                                                                                     'transcript',
                                                                                     'first_transcript_exon',
                                                                                     'last_transcript_exon']],
                                         maintain_order=True).agg(pl.all().str.join("~"))
-        sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['synonymous', # 'aa_pos' shouldn't be necessary here, since it's not set
+        sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['synonymous_specific', # 'aa_pos' shouldn't be necessary here, since it's not set
                                                                                     'consequence',
                                                                                     'codon_ref',
                                                                                     'aa_ref',
@@ -1690,7 +1690,7 @@ def saturate_bes(annotation_file,
                                     'specific_plus',
                                     'num_edits_safety',
                                     'additional_in_safety',
-                                    'synonymous',
+                                    'synonymous_specific',
                                     'consequence',
                                     'codon_ref',
                                     'aa_ref',
