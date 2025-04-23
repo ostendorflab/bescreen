@@ -156,7 +156,7 @@ def arguments():
 
     # optional
     # both
-    pamsite = args.pam_site
+    pamsite = args.pam_site.upper()
     pamlocation = args.pamlocation
     fiveprimepam = True if pamlocation == '5prime' else False if pamlocation == '3prime' else False
     edit_window_start = args.window_start
