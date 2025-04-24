@@ -70,7 +70,7 @@ def arguments():
             base_changes_tmp[base_changes_cli[be]['group']] = [be]
     base_changes = []
     for group in base_changes_tmp:
-        base_changes += [f'{k} ({base_changes_cli[k]['name']})' if 'name' in base_changes_cli[k].keys() else k for k in base_changes_tmp[group]]
+        base_changes += [f"'{k}' ({base_changes_cli[k]['name']})" if 'name' in base_changes_cli[k].keys() else f"'{k}'" for k in base_changes_tmp[group]]
     parser.add_argument('-b', '--base-change', help=f"Base changes to design guides for (available base changes are {', '.join(base_changes)}. Use one or chain multiple using a comma or use 'all' to use all)",
                         default='A-to-G,C-to-T', type=str)
     parser.add_argument('-q', '--window-start-plus', help='Flanking region before the editing window for broader specificity',
