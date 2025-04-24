@@ -21,13 +21,13 @@ def arguments():
     # for both
     required.add_argument('-r', '--ref-genome', help='Path to the reference genome',
                           metavar='<PATH>',
-                        #   default='resources/Ensembl/release-112/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa',
+                        #   default=os.path.join('resources', 'Ensembl', 'release-112', 'fasta', 'homo_sapiens', 'dna', 'Homo_sapiens.GRCh38.dna.primary_assembly.fa'),
                           required=True)
     required.add_argument('-o', '--output', help='Path to the output file with output prefix',
                           metavar='<PATH>', required=True)
     required.add_argument('-t', '--annotation-file', help='Path to the GTF annotation file',
                           metavar='<PATH>',
-                        #   default='resources/Ensembl/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.sorted.gtf.gz',
+                        #   default=os.path.join('resources', 'Ensembl', 'release-112', 'gtf', 'homo_sapiens', 'Homo_sapiens.GRCh38.112.sorted.gtf.gz'),
                           required=False)
 
 
@@ -83,7 +83,7 @@ def arguments():
                         action='store_true')
     parser.add_argument('-x', '--write-parquet', help='Force writing a new parquet file',
                         action='store_true')
-    base_editor_presets = shared.get_be_presets_dict(os.path.join(bescreendir, 'base_editors/be_presets.tsv'))
+    base_editor_presets = shared.get_be_presets_dict(os.path.join(bescreendir, 'base_editors', 'be_presets.tsv'))
     parser.add_argument('--be-preset', help='Use a known base editor to set the guide options',
                         choices=list(base_editor_presets.keys()), type=str)
     parser.add_argument('--filter-synonymous', help='Pre-filter the output for synonymous guides',
@@ -123,16 +123,16 @@ def arguments():
     parser.add_argument('--vep-assembly', help="Assembly for Ensembl's VEP annotations",
                         default='GRCh38', type=str)
     parser.add_argument('--vep-dir_cache', help="Path to cache directory for Ensembl's VEP annotations",
-                        default='resources/Ensembl/release-112/variation/indexed_vep_cache/cache', type=str)
+                        default=os.path.join('resources', 'Ensembl', 'release-112', 'variation', 'indexed_vep_cache', 'cache'), type=str)
     parser.add_argument('--vep-dir_plugins', help="Path to plugin directory for Ensembl's VEP annotations",
-                        default='resources/Ensembl/release-112/variation/indexed_vep_cache/plugins', type=str) # currently not in use
+                        default=os.path.join('resources', 'Ensembl', 'release-112', 'variation', 'indexed_vep_cache', 'plugins'), type=str) # currently not in use
     parser.add_argument('--vep-cache_version', help="Species for Ensembl's VEP annotations",
                         default='112', type=str)
     parser.add_argument('--vep-flags', help='Modify the output of --add-vep-annotations (not all flags might work). Please provide the flags as string within quotes (e.g. --vep-flags \'--mane --pubmed\'). If you only want to use one flag you have to end the string with a space (e.g. --vep-flags \'--everything \').\nThe following flags should work: --sift [p|s|b], --polyphen [p|s|b], --ccds, --hgvs, --symbol, --numbers, --domains, --regulatory, --canonical, --protein, --biotype, --af, --af_1kg, --af_esp, --af_gnomade, --af_gnomadg, --max_af, --pubmed, --uniprot, --mane, --tsl, --appris, --variant_class, --gene_phenotype, --mirna ', default='', type=str)
 
     # dbSNP
     parser.add_argument('--dbsnp-db', help="Path to dbSNP database for rsID input",
-                        default='resources/dbSNP/snp/organisms/human_9606/VCF/rsid.db', type=str)
+                        default=os.path.join('resources', 'dbSNP', 'snp', 'organisms', 'human_9606', 'VCF', 'rsid.db'), type=str)
 
     # blast
     parser.add_argument('--add-blast-counts', '--blast', help="Add counts of genome wide (main and mitochondrial chromosomes only) perfect matches using NCBI's BLAST",
