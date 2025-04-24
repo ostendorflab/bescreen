@@ -1,63 +1,63 @@
-name	class	window_start	window_end	plus_start	plus_end	guide_length	pam	window_start_fpam	window_end_fpam	plus_start_fpam	plus_end_fpam	comment	source	is_duplicate	is_usable
-A3A-BE3	CBE	4	8			20	NGG						beditor	false	true
-ABE7.10	ABE	4	7		1	20	NGG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true
-ABE7.10*	ABE	4	8	2	1	20	NGG	17	13	18–19	12	counted from PAM; length not given; set to 20	BE-FF	false	true
-ABE7.9	ABE	5	8	1	1	20	NGG	16	13	17	12	counted from PAM; length not given; set to 20	BE-FF	false	true
-ABE8e	ABE	3	8			20							Sheriff et al, 2022	false	true
-BE-PLUS	CBE	4	14		2	20	NGG	17	7		5–6	counted from PAM; length not given; set to 20	BE-FF	false	true
-BE1	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-BE2	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-BE3	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-BE3-R33A	CBE	5	7			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true
-BE4	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-BE4-Gam	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-BE4max	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-CP-ABEmax variants	ABE	4	7		7	20	NGG	17	14		7–13	counted from PAM; length not given; set to 20	BE-FF	false	true
-duplicate_ABE7.10	ABE	4	7			20	NGG						beditor	true	true
-duplicate_ABE7.10*	ABE	4	8			20	NGG						beditor	true	true
-duplicate_ABE7.9	ABE	5	8			20	NGG						beditor	true	true
-duplicate_BE-PLUS	CBE	4	14			20	NGG						beditor	true	true
-duplicate_BE1	CBE	4	8			20	NGG						beditor	true	true
-duplicate_BE2	CBE	4	8			20	NGG						beditor	true	true
-duplicate_BE3	CBE	4	8			20	NGG						beditor	true	true
-duplicate_BE3	CBE	4	8			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true
-duplicate_BE4	CBE	4	8			20	NGG						beditor	true	true
-duplicate_BE4-Gam	CBE	4	8			20	NGG						beditor	true	true
-duplicate_BE4max	CBE	4	8			20	NGG						beditor	true	true
-duplicate_BE4max	CBE	4	8			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true
-duplicate_HF-BE3	CBE	4	8			20	NGG						beditor	true	true
-duplicate_Target-AID	CBE	2	4			20	NG					Target-AID-NG?	beditor	true	true
-duplicate_Target-AID	CBE	2	4			20	NGG						beditor	true	true
-duplicate_Target-AID	CBE	2	4			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true
-duplicate_Target-AID-NG	CBE	2	4			20	NG					no edit given, but all CBE?	BEable-GPS	true	true
-duplicate_xBE3	CBE	4	8			20	NG						beditor	true	true
-duplicate_XBE3	CBE	4	8			20	NG					no edit given, but all CBE?	BEable-GPS	true	true
-duplicate_YE1-BE3	CBE	5	7			20	NGG						beditor	true	true
-duplicate_YE1-BE3	CBE	5	7			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true
-duplicate_YEE-BE3	CBE	5	6			20	NGG						beditor	true	true
-duplicate_YEE-BE3	CBE	5	6			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true
-eBE-S3	CBE	4	8			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true
-EE-BE3	CBE	5	6			20	NGG						beditor	false	true
-evoAPOBEC1-BE4max	CBE	3	8	2	4	20	NGG	18	13	19–20	9–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-evoFERNY-BE4max	CBE	3	8	2		20	NGG	18	13	19–20		counted from PAM; length not given; set to 20	BE-FF	false	true
-hA3A-eBE-Y130F	CBE	3	8			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true
-hA3A-eBE-Y132D	CBE	3	7			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true
-hA3A-eBE3	CBE	2	13			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true
-HF-BE3	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-NG-ABEmax	ABE	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true
-TadCBEd	CBE	3	9			20							Neugebauer et al, 2023	false	true
-TadCBEs	CBE	3	8			20							Neugebauer et al, 2023	false	true
-Target-AID	CBE	2	4		4	20	NGG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true
-Target-AID-NG	CBE	2	4		4	20	NG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true
-unusable_BE3-R33A/K34A	CBE	5	6			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false
-unusable_CP-CBEmax variants	CBE	4	9		2	20	NGG	17	12		10–11	counted from PAM; length not given; set to 20; may exhibit editing upstream to the protospacer	BE-FF	false	false
-unusable_eA3A-BE3	CBE	4	8			20	NGG					unusable?	beditor	false	false
-unusable_eA3A-BE3	CBE	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20; when C comes after T (discard)	BE-FF	false	false
-unusable_eA3А-BE3	CBE	4	8			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false
-unusable_evoCDA1-BE4max	CBE	1	12		2	20	NGG	20	9		7–8	counted from PAM; length not given; set to 20;* may exhibit editing upstream to the protospacer	BE-FF	false	false
-V106W-TadCBEs	CBE	3	8			20							Neugebauer et al, 2023	false	true
-xABE	ABE	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true
-xBE3	CBE	4	8	2	3	20	NG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true
-YE1-BE3	CBE	5	7	1		20	NGG	16	14	17		counted from PAM; length not given; set to 20	BE-FF	false	true
-YE2-BE3	CBE	5	6			20	NGG						beditor	false	true
-YEE-BE3	CBE	6	6	1		20	NGG	15	15	16		counted from PAM; length not given; set to 20	BE-FF	false	true
+name	class	window_start	window_end	plus_start	plus_end	guide_length	pam	window_start_fpam	window_end_fpam	plus_start_fpam	plus_end_fpam	comment	source	is_duplicate	is_usable	cas	pam_location
+A3A-BE3	C-to-T	4	8			20	NGG						beditor	false	true	*Cas9	3prime
+ABE7.10	A-to-G	4	7		1	20	NGG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+ABE7.10*	A-to-G	4	8	2	1	20	NGG	17	13	18–19	12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+ABE7.9	A-to-G	5	8	1	1	20	NGG	16	13	17	12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+ABE8e	A-to-G	3	8			20							Sheriff et al, 2022	false	true		
+BE-PLUS	C-to-T	4	14		2	20	NGG	17	7		5–6	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+BE1	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+BE2	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+BE3	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+BE3-R33A	C-to-T	5	7			20	NGG					no edit given, buåt all CBE?	BEable-GPS	false	true	*Cas9	3prime
+BE4	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+BE4-Gam	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+BE4max	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+CP-ABEmax variants	A-to-G	4	7		7	20	NGG	17	14		7–13	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+duplicate_ABE7.10	A-to-G	4	7			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_ABE7.10*	A-to-G	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_ABE7.9	A-to-G	5	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE-PLUS	C-to-T	4	14			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE1	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE2	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE3	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE3	C-to-T	4	8			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true	*Cas9	3prime
+duplicate_BE4	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE4-Gam	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE4max	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_BE4max	C-to-T	4	8			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true	*Cas9	3prime
+duplicate_HF-BE3	C-to-T	4	8			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_Target-AID	C-to-T	2	4			20	NG					Target-AID-NG?	beditor	true	true	NG-*Cas9	3prime
+duplicate_Target-AID	C-to-T	2	4			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_Target-AID	C-to-T	2	4			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true	*Cas9	3prime
+duplicate_Target-AID-NG	C-to-T	2	4			20	NG					no edit given, but all CBE?	BEable-GPS	true	true	NG-*Cas9	3prime
+duplicate_xBE3	C-to-T	4	8			20	NG						beditor	true	true	NG-*Cas9	3prime
+duplicate_XBE3	C-to-T	4	8			20	NG					no edit given, but all CBE?	BEable-GPS	true	true	NG-*Cas9	3prime
+duplicate_YE1-BE3	C-to-T	5	7			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_YE1-BE3	C-to-T	5	7			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true	*Cas9	3prime
+duplicate_YEE-BE3	C-to-T	5	6			20	NGG						beditor	true	true	*Cas9	3prime
+duplicate_YEE-BE3	C-to-T	5	6			20	NGG					no edit given, but all CBE?	BEable-GPS	true	true	*Cas9	3prime
+eBE-S3	C-to-T	4	8			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true	*Cas9	3prime
+EE-BE3	C-to-T	5	6			20	NGG						beditor	false	true	*Cas9	3prime
+evoAPOBEC1-BE4max	C-to-T	3	8	2	4	20	NGG	18	13	19–20	9–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+evoFERNY-BE4max	C-to-T	3	8	2		20	NGG	18	13	19–20		counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+hA3A-eBE-Y130F	C-to-T	3	8			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true	*Cas9	3prime
+hA3A-eBE-Y132D	C-to-T	3	7			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true	*Cas9	3prime
+hA3A-eBE3	C-to-T	2	13			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true	*Cas9	3prime
+HF-BE3	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+NG-ABEmax	A-to-G	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
+TadCBEd	C-to-T	3	9			20							Neugebauer et al, 2023	false	true		
+TadCBEs	C-to-T	3	8			20							Neugebauer et al, 2023	false	true		
+Target-AID	C-to-T	2	4		4	20	NGG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+Target-AID-NG	C-to-T	2	4		4	20	NG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
+unusable_BE3-R33A/K34A	C-to-T	5	6			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false	*Cas9	3prime
+unusable_CP-CBEmax variants	C-to-T	4	9		2	20	NGG	17	12		10–11	counted from PAM; length not given; set to 20; may exhibit editing upstream to the protospacer	BE-FF	false	false	*Cas9	3prime
+unusable_eA3A-BE3	C-to-T	4	8			20	NGG					unusable?	beditor	false	false	*Cas9	3prime
+unusable_eA3A-BE3	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20; when C comes after T (discard)	BE-FF	false	false	*Cas9	3prime
+unusable_eA3А-BE3	C-to-T	4	8			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false	*Cas9	3prime
+unusable_evoCDA1-BE4max	C-to-T	1	12		2	20	NGG	20	9		7–8	counted from PAM; length not given; set to 20;* may exhibit editing upstream to the protospacer	BE-FF	false	false	*Cas9	3prime
+V106W-TadCBEs	C-to-T	3	8			20							Neugebauer et al, 2023	false	true		
+xABE	A-to-G	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
+xBE3	C-to-T	4	8	2	3	20	NG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
+YE1-BE3	C-to-T	5	7	1		20	NGG	16	14	17		counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
+YE2-BE3	C-to-T	5	6			20	NGG						beditor	false	true	*Cas9	3prime
+YEE-BE3	C-to-T	6	6	1		20	NGG	15	15	16		counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime

@@ -378,30 +378,33 @@ def get_be_presets_dict(be_preset_tsv):
             pl.col("window_end"),
             pl.col("plus_start"),
             pl.col("plus_end"),
-            pl.col("guide_length")
-            # pl.col("guide_length"),
-            # pl.col("pam")
+            pl.col("guide_length"),
+            pl.col("pam"),
+            pl.col("cas"),
+            pl.col("pam_location")
         ).filter(
             ~pl.col("name").is_null(),
             ~pl.col("class").is_null(),
             ~pl.col("window_start").is_null(),
             ~pl.col("window_end").is_null(),
-            ~pl.col("guide_length").is_null()
-            # ~pl.col("guide_length").is_null(),
-            # ~pl.col("pam").is_null()
+            ~pl.col("guide_length").is_null(),
+            ~pl.col("pam").is_null(),
+            ~pl.col("cas").is_null(),
+            ~pl.col("pam_location").is_null()
         ).with_columns(
             pl.col("plus_start").fill_null(strategy="zero"),
             pl.col("plus_end").fill_null(strategy="zero")
         )
 
-    preset_dict['default'] = {"class": 'ABE,CBE',
+    preset_dict['default'] = {"class": 'A-to-G,C-to-T',
                               "window_start": 4,
                               "window_end": 8,
                               "plus_start": 0,
                               "plus_end": 0,
-                              "guide_length": 20}
-                            #   "guide_length": 20,
-                            #   "pam": 'NG'}
+                              "guide_length": 20,
+                              "pam": 'NG',
+                              "cas": 'NG-*Cas9',
+                              'pam_location': '3prime'}
 
     for row in preset_df.iter_rows(named=True):
         preset_dict[row['name']] = {"class": row['class'],
@@ -409,9 +412,10 @@ def get_be_presets_dict(be_preset_tsv):
                                     "window_end": row['window_end'],
                                     "plus_start": row['plus_start'],
                                     "plus_end": row['plus_end'],
-                                    "guide_length": row['guide_length']}
-                                    # "guide_length": row['guide_length'],
-                                    # "pam": row['pam']}
+                                    "guide_length": row['guide_length'],
+                                    "pam": row['pam'],
+                                    "cas": row['cas'],
+                                    "pam_location": row['pam_location']}
 
     return preset_dict
 
@@ -484,48 +488,50 @@ iupac_nt_code = {
 }
 
 bes = {
-    'ABE': {'group': 'Deaminase groups',
-            'fwd': {'REF': 'A', 'ALT': 'G'},
-            'rev': {'REF': 'T', 'ALT': 'C'}},
-    'CBE': {'group': 'Deaminase groups',
-            'fwd': {'REF': 'C', 'ALT': 'T'},
-            'rev': {'REF': 'G', 'ALT': 'A'}},
-    'A-to-C': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'A', 'ALT': 'C'},
-               'rev': {'REF': 'T', 'ALT': 'G'}},
-    'A-to-G': {'group': 'Generic base edits (for future editors)',
+    # 'ABE': {'group': 'Deaminase groups',
+    #         'fwd': {'REF': 'A', 'ALT': 'G'},
+    #         'rev': {'REF': 'T', 'ALT': 'C'}},
+    # 'CBE': {'group': 'Deaminase groups',
+    #         'fwd': {'REF': 'C', 'ALT': 'T'},
+    #         'rev': {'REF': 'G', 'ALT': 'A'}},
+    # 'A-to-C': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'A', 'ALT': 'C'},
+    #            'rev': {'REF': 'T', 'ALT': 'G'}},
+    'A-to-G': {'group': 'Deaminases',
+               'name': 'ABE',
                'fwd': {'REF': 'A', 'ALT': 'G'},
                'rev': {'REF': 'T', 'ALT': 'C'}},
-    'A-to-T': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'A', 'ALT': 'T'},
-               'rev': {'REF': 'T', 'ALT': 'A'}},
-    'C-to-A': {'group': 'Generic base edits (for future editors)',
+    # 'A-to-T': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'A', 'ALT': 'T'},
+    #            'rev': {'REF': 'T', 'ALT': 'A'}},
+    'C-to-A': {'group': 'Glycosylases',
                'fwd': {'REF': 'C', 'ALT': 'A'},
                'rev': {'REF': 'G', 'ALT': 'T'}},
-    'C-to-G': {'group': 'Generic base edits (for future editors)',
+    'C-to-G': {'group': 'Glycosylases',
                'fwd': {'REF': 'C', 'ALT': 'G'},
                'rev': {'REF': 'G', 'ALT': 'C'}},
-    'C-to-T': {'group': 'Generic base edits (for future editors)',
+    'C-to-T': {'group': 'Deaminases',
+               'name': 'CBE',
                'fwd': {'REF': 'C', 'ALT': 'T'},
                'rev': {'REF': 'G', 'ALT': 'A'}},
-    'G-to-A': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'G', 'ALT': 'A'},
-               'rev': {'REF': 'C', 'ALT': 'T'}},
-    'G-to-C': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'G', 'ALT': 'C'},
-               'rev': {'REF': 'C', 'ALT': 'G'}},
-    'G-to-T': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'G', 'ALT': 'T'},
-               'rev': {'REF': 'C', 'ALT': 'A'}},
-    'T-to-A': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'T', 'ALT': 'A'},
-               'rev': {'REF': 'A', 'ALT': 'T'}},
-    'T-to-C': {'group': 'Generic base edits (for future editors)',
+    # 'G-to-A': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'G', 'ALT': 'A'},
+    #            'rev': {'REF': 'C', 'ALT': 'T'}},
+    # 'G-to-C': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'G', 'ALT': 'C'},
+    #            'rev': {'REF': 'C', 'ALT': 'G'}},
+    # 'G-to-T': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'G', 'ALT': 'T'},
+    #            'rev': {'REF': 'C', 'ALT': 'A'}},
+    # 'T-to-A': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'T', 'ALT': 'A'},
+    #            'rev': {'REF': 'A', 'ALT': 'T'}},
+    'T-to-C': {'group': 'Glycosylases',
                'fwd': {'REF': 'T', 'ALT': 'C'},
-               'rev': {'REF': 'A', 'ALT': 'G'}},
-    'T-to-G': {'group': 'Generic base edits (for future editors)',
-               'fwd': {'REF': 'T', 'ALT': 'G'},
-               'rev': {'REF': 'A', 'ALT': 'C'}}
+               'rev': {'REF': 'A', 'ALT': 'G'}}#,
+    # 'T-to-G': {'group': 'Generic base edits (for future editors)',
+    #            'fwd': {'REF': 'T', 'ALT': 'G'},
+    #            'rev': {'REF': 'A', 'ALT': 'C'}}
 }
 
 

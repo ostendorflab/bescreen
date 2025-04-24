@@ -61,9 +61,18 @@ def arguments():
                         default=8, type=int)
     parser.add_argument('-l', '--guide-length', help='Length of guide (the minimum is 17 bp)',
                         default=20, type=int)
-    base_editors = list(shared.bes.keys())
-    parser.add_argument('-b', '--base-editor', help=f"Base editors to design guides for (Available base editors are {', '.join(base_editors)}. Use one or chain multiple using a comma or use 'all' to use all)",
-                        default='ABE,CBE', type=str)
+    base_changes_cli = shared.bes
+    base_changes_tmp = {}
+    for be in base_changes_cli:
+        if base_changes_cli[be]['group'] in base_changes_tmp.keys():
+            base_changes_tmp[base_changes_cli[be]['group']].append(be)
+        else:
+            base_changes_tmp[base_changes_cli[be]['group']] = [be]
+    base_changes = []
+    for group in base_changes_tmp:
+        base_changes += [f'{k} ({base_changes_cli[k]['name']})' if 'name' in base_changes_cli[k].keys() else k for k in base_changes_tmp[group]]
+    parser.add_argument('-b', '--base-change', help=f"Base changes to design guides for (available base changes are {', '.join(base_changes)}. Use one or chain multiple using a comma or use 'all' to use all)",
+                        default='A-to-G,C-to-T', type=str)
     parser.add_argument('-q', '--window-start-plus', help='Flanking region before the editing window for broader specificity',
                         default=0, type=int)
     parser.add_argument('-w', '--window-end-plus', help='Flanking region after the editing window for broader specificity',
@@ -146,7 +155,7 @@ def arguments():
     if args.annotation_file and not os.path.isfile(args.annotation_file): # for besaturate (should be set as requried now)
         sys.exit('GTF annotation file not found!') # required for besaturate
 
-    if any(be not in base_editors + ['all'] for be in args.base_editor.split(',')):
+    if any(be not in base_changes + ['all'] for be in args.base_change.split(',')):
         sys.exit('At least one invalid base editor was used!')
 
     if args.guide_length < 17:
@@ -162,7 +171,7 @@ def arguments():
     edit_window_start = args.window_start
     edit_window_end = args.window_end
     guidelength = args.guide_length
-    baseeditor = args.base_editor.split(',')
+    baseeditor = args.base_change.split(',')
     aspect = args.aspect
     edit_window_start_plus = args.window_start_plus
     edit_window_end_plus = args.window_end_plus
@@ -229,7 +238,7 @@ def arguments():
             edit_window_end = base_editor_presets[be_preset]['window_end']
         if (not '-l' in sys_argvs) and (not '--guide-length' in sys_argvs):
             guidelength = base_editor_presets[be_preset]['guide_length']
-        if (not '-b' in sys_argvs) and (not '--base-editor' in sys_argvs):
+        if (not '-b' in sys_argvs) and (not '--base-change' in sys_argvs):
             baseeditor = base_editor_presets[be_preset]['class'].split(',')
         if (not '-q' in sys_argvs) and (not '--window-start-plus' in sys_argvs):
             edit_window_start_plus = base_editor_presets[be_preset]['plus_start']
