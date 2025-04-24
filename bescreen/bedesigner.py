@@ -52,6 +52,10 @@ def design_bes(annotation_file,
         raise ValueError('Please set the guide length to at least 17 bp!')
 
     bes = shared.bes
+    for be in bes: # delete unneeded keys, which disturb correct iteration
+        keys_to_delete = [key for key in bes[be].keys() if key not in ['fwd', 'rev']]
+        for key_to_delete in keys_to_delete:
+            del bes[be][key_to_delete]
 
     if fiveprimepam:
          # swich fwd and rev for edits

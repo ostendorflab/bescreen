@@ -1336,7 +1336,7 @@ def saturate_bes(annotation_file,
         sgrnas = sgrnas.with_columns(exon_number = sgrnas['exon_number'].cast(int).cast(str))
         sgrnas = sgrnas.with_columns(first_transcript_exon = sgrnas['first_transcript_exon'].cast(int).cast(str))
         sgrnas = sgrnas.with_columns(last_transcript_exon = sgrnas['last_transcript_exon'].cast(int).cast(str))
-        sgrnas = sgrnas.with_columns(synonymous = sgrnas['synonymous_specific'].cast(str))
+        sgrnas = sgrnas.with_columns(synonymous_specific = sgrnas['synonymous_specific'].cast(str))
         sgrnas = sgrnas.with_columns(splice_site_included = sgrnas['splice_site_included'].cast(str))
         sgrnas = sgrnas.with_columns(variant = sgrnas['variant'])
         sgrnas = sgrnas.with_columns(codon_ref = sgrnas['codon_ref'])
@@ -1603,7 +1603,7 @@ def saturate_bes(annotation_file,
         sgrnas_ne = sgrnas_ne.with_columns(exon_number = sgrnas_ne['exon_number'].cast(int).cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(first_transcript_exon = sgrnas_ne['first_transcript_exon'].cast(int).cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(last_transcript_exon = sgrnas_ne['last_transcript_exon'].cast(int).cast(str))
-        sgrnas_ne = sgrnas_ne.with_columns(synonymous = sgrnas_ne['synonymous_specific'].cast(str))
+        sgrnas_ne = sgrnas_ne.with_columns(synonymous_specific = sgrnas_ne['synonymous_specific'].cast(str))
         sgrnas_ne = sgrnas_ne.with_columns(splice_site_included = sgrnas_ne['splice_site_included'].cast(str))
         sgrnas_ne = sgrnas_ne.group_by([col for col in sgrnas_ne.columns if col not in ['exon_number', # 'aa_pos' shouldn't be necessary here, since it's not set
                                                                                     'transcript',
