@@ -71,7 +71,7 @@ def arguments():
     base_changes = []
     for group in base_changes_tmp:
         base_changes += [f"'{k}' ({base_changes_cli[k]['name']})" if 'name' in base_changes_cli[k].keys() else f"'{k}'" for k in base_changes_tmp[group]]
-    parser.add_argument('-b', '--base-change', help=f"Base changes to design guides for (available base changes are {', '.join(base_changes)}. Use one or chain multiple using a comma or use 'all' to use all)",
+    parser.add_argument('-b', '--base-change', '--base-editor', help=f"Base changes to design guides for. Available base changes are {', '.join(base_changes)}. Use one or chain multiple using a comma or use 'all' to use all. The options 'ABE' and 'CBE' are kept due to legacy reasons",
                         default='A-to-G,C-to-T', type=str)
     parser.add_argument('-q', '--window-start-plus', help='Flanking region before the editing window for broader specificity',
                         default=0, type=int)
@@ -155,7 +155,7 @@ def arguments():
     if args.annotation_file and not os.path.isfile(args.annotation_file): # for besaturate (should be set as requried now)
         sys.exit('GTF annotation file not found!') # required for besaturate
 
-    if any(be not in base_changes + ['all'] for be in args.base_change.split(',')):
+    if any(be not in base_changes + ['all', 'ABE', 'CBE'] for be in args.base_change.split(',')):
         sys.exit('At least one invalid base editor was used!')
 
     if args.guide_length < 17:
@@ -226,6 +226,12 @@ def arguments():
     gene_symbols = args.gene_symbols
     # beregion
     regions = args.regions
+
+    for i, n in enumerate(basechange):
+        if n == 'ABE':
+            basechange[i] = 'A-to-G'
+        if n == 'CBE':
+            basechange[i] = 'C-to-T'
 
     be_preset = args.be_preset
     if be_preset:
