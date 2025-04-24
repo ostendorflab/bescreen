@@ -155,7 +155,7 @@ def arguments():
     if args.annotation_file and not os.path.isfile(args.annotation_file): # for besaturate (should be set as requried now)
         sys.exit('GTF annotation file not found!') # required for besaturate
 
-    if any(be not in base_changes + ['all', 'ABE', 'CBE'] for be in args.base_change.split(',')):
+    if any(be not in list(base_changes_cli.keys()) + ['all', 'ABE', 'CBE'] for be in args.base_change.split(',')):
         sys.exit('At least one invalid base editor was used!')
 
     if args.guide_length < 17:
