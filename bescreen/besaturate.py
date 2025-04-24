@@ -18,7 +18,7 @@ def saturate_bes(annotation_file,
                  edit_window_start,
                  edit_window_end,
                  guidelength,
-                 baseeditor,
+                 basechange,
                  edit_window_start_plus,
                  edit_window_end_plus,
                  splice_sites,
@@ -65,10 +65,10 @@ def saturate_bes(annotation_file,
         edit_window_start_plus = edit_window_start_plus_new
 
     # select base editors
-    if not baseeditor:
+    if not basechange:
         raise ValueError('Please select at least one base editor!')
-    elif not 'all' in baseeditor:
-        bes = {key: bes[key] for key in baseeditor}
+    elif not 'all' in basechange:
+        bes = {key: bes[key] for key in basechange}
 
     if input_file:
 
@@ -1288,7 +1288,7 @@ def saturate_bes(annotation_file,
     # editing guides found
     if guide_output: # if no guide is found at all (very unlikely)
         sgrnas = pl.DataFrame({"variant": variant_output,
-                            "base_editor": be_output,
+                            "base_change": be_output,
                             "symbol": symbol_output,
                             "guide": guide_output,
                             "guide_chrom": chroms_output,
@@ -1555,7 +1555,7 @@ def saturate_bes(annotation_file,
     # non-editing guides found
     if guide_output_ne:
         sgrnas_ne = pl.DataFrame({"variant":  "NA_for_non_editing_guides",
-                                "base_editor": be_output_ne,
+                                "base_change": be_output_ne,
                                 "symbol": symbol_output_ne,
                                 "guide": guide_output_ne,
                                 "guide_chrom": chroms_output_ne,

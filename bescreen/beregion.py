@@ -17,7 +17,7 @@ def saturate_region(ref_genome,
                     edit_window_start,
                     edit_window_end,
                     guidelength,
-                    baseeditor,
+                    basechange,
                     edit_window_start_plus,
                     edit_window_end_plus,
                     vep,
@@ -54,10 +54,10 @@ def saturate_region(ref_genome,
         edit_window_start_plus = edit_window_start_plus_new
 
     # select base editors
-    if not baseeditor:
+    if not basechange:
         raise ValueError('Please select at least one base editor!')
-    elif not 'all' in baseeditor:
-        bes = {key: bes[key] for key in baseeditor}
+    elif not 'all' in basechange:
+        bes = {key: bes[key] for key in basechange}
 
     if input_file:
 
@@ -471,7 +471,7 @@ def saturate_region(ref_genome,
     # editing guides found
     if guide_output: # if no guide is found at all
         sgrnas = pl.DataFrame({"variant": variant_output,
-                            "base_editor": be_output,
+                            "base_change": be_output,
                             "guide": guide_output,
                             "guide_chrom": chroms_output,
                             "guide_start": guide_starts_output,
@@ -609,7 +609,7 @@ def saturate_region(ref_genome,
     # non-editing guides found
     if guide_output_ne:
         sgrnas_ne = pl.DataFrame({"variant":  "NA_for_non_editing_guides",
-                                "base_editor": be_output_ne,
+                                "base_change": be_output_ne,
                                 "guide": guide_output_ne,
                                 "guide_chrom": chroms_output_ne,
                                 "guide_start": guide_starts_output_ne,

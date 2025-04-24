@@ -22,7 +22,7 @@ def design_bes(annotation_file,
                edit_window_end,
                guidelength,
                ignorestring,
-               baseeditor,
+               basechange,
                edit_window_start_plus,
                edit_window_end_plus,
                allpossible,
@@ -75,10 +75,10 @@ def design_bes(annotation_file,
         edit_window_start_plus = edit_window_start_plus_new
 
     # select base editors
-    if not baseeditor:
+    if not basechange:
         raise ValueError('Please select at least one base editor!')
-    elif not 'all' in baseeditor:
-        bes = {key: bes[key] for key in baseeditor}
+    elif not 'all' in basechange:
+        bes = {key: bes[key] for key in basechange}
 
     ref_genome_pyfaidx = pyfaidx.Fasta(refgenome)
 
@@ -1126,7 +1126,7 @@ def design_bes(annotation_file,
 
     # transform lists to pl.DataFrame for better handling
     sgrnas = pl.DataFrame({"variant": all_variant,
-                           "base_editor": all_be_strings,
+                           "base_change": all_be_strings,
                            "symbol": all_gene_symbols,
                            "guide": all_possible_guides,
                            "guide_chrom": all_chroms,
@@ -1269,7 +1269,7 @@ def design_bes(annotation_file,
 
     non_list_columns = ['variant',
                         'symbol',
-                        'base_editor',
+                        'base_change',
                         'ne_plus',
                         'strand',
                         'originally_intended_ALT',
@@ -1323,7 +1323,7 @@ def design_bes(annotation_file,
         #                                     pl.concat_str(
         #                                         [
         #                                             pl.col("variant"),
-        #                                             pl.col("base_editor"),
+        #                                             pl.col("base_change"),
         #                                         ],
         #                                         separator="_",
         #                                     ).alias("variant_base_editor"))['variant_base_editor'].to_list()
@@ -1332,7 +1332,7 @@ def design_bes(annotation_file,
                                             pl.concat_str(
                                                 [
                                                     pl.col("variant"),
-                                                    pl.col("base_editor"),
+                                                    pl.col("base_change"),
                                                 ],
                                                 separator="_",
                                             ).alias("variant_base_editor"))['variant_base_editor'].to_list()
@@ -1343,7 +1343,7 @@ def design_bes(annotation_file,
                                             pl.concat_str(
                                                 [
                                                     pl.col("variant"),
-                                                    pl.col("base_editor"),
+                                                    pl.col("base_change"),
                                                 ],
                                                 separator="_",
                                             ).alias("variant_base_editor")
@@ -1351,7 +1351,7 @@ def design_bes(annotation_file,
                                             ).filter(~pl.col('variant_base_editor').is_in(sgrnas_to_filter_list)
                                                      ).drop('variant_base_editor')
 
-        for col in [filtercol for filtercol in sgrnas_filtered_out.columns if filtercol not in ['variant', 'base_editor', 'strand', 'ref_match']]:
+        for col in [filtercol for filtercol in sgrnas_filtered_out.columns if filtercol not in ['variant', 'base_change', 'strand', 'ref_match']]:
             sgrnas_filtered_out = sgrnas_filtered_out.with_columns(pl.lit("no_guides_found").alias(col))
 
         sgrnas_not_or_filtered_out = pl.concat([sgrnas_not_to_filter, sgrnas_filtered_out]).unique() # there shouldn't be any duplicates, but unique() necessary for correct concat
