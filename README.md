@@ -7,6 +7,10 @@ To run BEscreen, you need to run the script `bescreen.py` in a Python environmen
 - `environment_full.yaml (bescreen_full)`: The environment for the command line version with Ensembl's VEP and NCBI's BLAST.
 - `environment_full_vepfixed.yaml (bescreen_full_vepfixed)`: The environment for the command line version with Ensembl's VEP with fixed version and NCBI's BLAST (use this if the one without version fixing doesn't work).
 
+WARNING: If you use macOS and the Rosetta2 emulator (which you need, if you want to install VEP using conda), Polars >= 1.27.1 will raise an error. If you encounter this error, you need to install an older version of Polars or install Polars using pip. We provide fixed environment files for both:
+- `environment_full_polarsfixed.yaml (bescreen_full_polarsfixed)`: The environment for the command line version with Ensembl's VEP and NCBI's BLAST and Polars with fixed version (use this if the one without version fixing doesn't work).
+- `environment_full_pippolars.yaml (bescreen_full_pippolars)`: The environment for the command line version with Ensembl's VEP and NCBI's BLAST and Polars installed via pip (use this if the one without version fixing doesn't work).
+
 To install one of these environments run:
 ```
 # install a conda distribution like mini-forge
@@ -139,13 +143,14 @@ CSV files containing variants need to be formatted as either of the following ex
 The reference base can be omitted in any case (in the file you can leave the column out completely), but then BEscreen will not check, if your reference base is the one it also finds. If these differ this hints to the usage of different reference genomes.
 
 ### Genes as input
-Gene inputs need to be provided as HGNC gene symbol (e.g. GAPDH). These can be provided either directly using the `--gene-symbols (-g)` flag. If you provide multiple genes, they need to be separated by commas without any spaces. The genes can also be provided using a CSV file containing the column `symbol`.
+Gene inputs need to be provided as HGNC gene symbol (e.g. GAPDH) or transcript name (e.g. GAPDH-201). These can be provided either directly using the `--gene-symbols (-g)` flag. If you provide multiple genes, they need to be separated by commas without any spaces. The genes can also be provided using a CSV file containing the column `symbol`.
 
 CSV files containing genes need to be formatted as either of the following examples:
 - columns `variant`:
     ```
     symbol
     GAPDH
+    GAPDH-201
     ```
 
 ### Regions as input
@@ -177,25 +182,19 @@ python bescreen.py --ref-genome path/to/reference_genome.fa --output path/to/out
 More options can be found in the help:
 ```
 usage: python bescreen.py [-h] -r <PATH> -o <PATH> [-t <PATH>]
-                          (-i <PATH> | -v VARIANT | -g GENE_SYMBOLS | -z REGIONS)
-                          [-p {NGG,NG}] [-s WINDOW_START] [-e WINDOW_END] [-l GUIDE_LENGTH]
-                          [-b {both,ABE,CBE}] [-q WINDOW_START_PLUS] [-w WINDOW_END_PLUS]
-                          [-d {collapsed,exploded}] [-x]
-                          [--be-preset {default,A3A-BE3,ABE7.10,ABE7.10*,ABE7.9,BE-PLUS,BE1,
-                          BE2,BE3,BE3-R33A,BE4,BE4-Gam,BE4max,CP-ABEmax variants,eBE-S3,
-                          EE-BE3,evoAPOBEC1-BE4max,evoFERNY-BE4max,hA3A-eBE-Y130F,
-                          hA3A-eBE-Y132D,hA3A-eBE3,HF-BE3,NG-ABEmax,Target-AID,Target-AID-NG,
-                          xABE,xBE3,YE1-BE3,YE2-BE3,YEE-BE3}]
+                          (-i <PATH> | -v VARIANT | -g GENE_SYMBOLS | -z REGIONS) [-p PAM_SITE]
+                          [-u {5prime,3prime}] [-s WINDOW_START] [-e WINDOW_END] [-l GUIDE_LENGTH]
+                          [-b BASE_CHANGE] [-q WINDOW_START_PLUS] [-w WINDOW_END_PLUS]
+                          [-d {collapsed,exploded}] [-m] [-x]
+                          [--be-preset {default,A3A-BE3,ABE7.10,ABE7.10*,ABE7.9,BE-PLUS,BE1,BE2,BE3,BE3-R33A,BE4,BE4-Gam,BE4max,CP-ABEmax variants,eBE-S3,EE-BE3,evoAPOBEC1-BE4max,evoFERNY-BE4max,hA3A-eBE-Y130F,hA3A-eBE-Y132D,hA3A-eBE3,HF-BE3,NG-ABEmax,Target-AID,Target-AID-NG,xABE,xBE3,YE1-BE3,YE2-BE3,YEE-BE3}]
                           [--filter-synonymous] [--filter-splice-site] [--filter-specific]
                           [--filter-missense] [--filter-nonsense] [--filter-stoplost]
                           [--filter-startlost] [--write-bam] [-n IGNORE_STRING] [-a]
                           [-f {variant,vcf,symbol,region}] [-y] [--add-vep-annotations]
                           [--vep-species VEP_SPECIES] [--vep-assembly VEP_ASSEMBLY]
-                          [--vep-dir_cache VEP_DIR_CACHE]
-                          [--vep-dir_plugins VEP_DIR_PLUGINS]
+                          [--vep-dir_cache VEP_DIR_CACHE] [--vep-dir_plugins VEP_DIR_PLUGINS]
                           [--vep-cache_version VEP_CACHE_VERSION] [--vep-flags VEP_FLAGS]
-                          [--dbsnp-db DBSNP_DB] [--add-blast-counts]
-                          [--blast-main-chromosomes-only]
+                          [--dbsnp-db DBSNP_DB] [--add-blast-counts] [--blast-main-chromosomes-only]
 
 bescreen
 
@@ -204,38 +203,46 @@ options:
   -i <PATH>, --input <PATH>
                         Path to the input file
   -v VARIANT, --variant VARIANT
-                        One or more variants you want to design guides for using variant
-                        strings ([chromosome]_[genomic_position]_[alternative_base] or
-                        [chromosome]_[genomic_position]_[reference_base]_[alternative_base])
-                        or rsIDs or protein amino acid change
+                        One or more variants you want to design guides for using variant strings
+                        ([chromosome]_[genomic_position]_[alternative_base] or
+                        [chromosome]_[genomic_position]_[reference_base]_[alternative_base]) or rsIDs
+                        or protein amino acid change
                         ([gene_symbol]-[transcript_number]-[WTpositionMUT] or
                         [gene_symbol]-[WTpositionMUT])
   -g GENE_SYMBOLS, --gene-symbols GENE_SYMBOLS
                         One or more HGNC gene symbols separated by commas
   -z REGIONS, --regions REGIONS
-                        One or more regions of the form [CHROM]:[START]-[END] separated by
-                        commas
-  -p {NGG,NG}, --pam-site {NGG,NG}
-                        Sequence of the PAM site
+                        One or more regions of the form [CHROM]:[START]-[END] separated by commas
+  -p PAM_SITE, --pam-site PAM_SITE
+                        Sequence of the PAM site. What PAM site should your guides be designed for?
+                        Enter you PAM sequence using IUPAC code: A, C, G, T, U(=T), W(=A,T), S(=C,G),
+                        M(=A,C), K(=G,T), R(=A,G), Y(=C,T), B(=C,G,T), D(=A,G,T), H(=A,C,T), V(=A,C,G)
+                        or N(=A,C,G,T)
+  -u {5prime,3prime}, --pamlocation {5prime,3prime}
+                        Location of the PAM site
   -s WINDOW_START, --window-start WINDOW_START
                         Starting position of editing window
   -e WINDOW_END, --window-end WINDOW_END
                         End position of editing window
   -l GUIDE_LENGTH, --guide-length GUIDE_LENGTH
-                        Length of guide
-  -b {both,ABE,CBE}, --base-editor {both,ABE,CBE}
-                        Base editor to design guides for
+                        Length of guide (the minimum is 17 bp)
+  -b BASE_CHANGE, --base-change BASE_CHANGE, --base-editor BASE_CHANGE
+                        Base changes to design guides for. Available base changes are 'A-to-G' (ABE),
+                        'C-to-T' (CBE), 'C-to-A', 'C-to-G', 'T-to-C'. Use one or chain multiple using
+                        a comma or use 'all' to use all. The options 'ABE' and 'CBE' are kept due to
+                        legacy reasons
   -q WINDOW_START_PLUS, --window-start-plus WINDOW_START_PLUS
                         Flanking region before the editing window for broader specificity
   -w WINDOW_END_PLUS, --window-end-plus WINDOW_END_PLUS
                         Flanking region after the editing window for broader specificity
   -d {collapsed,exploded}, --aspect {collapsed,exploded}
                         Collapsed (default) or exploded aspect of the output
+  -m, --mane-select-only
+                        Use only MANE select transcripts for searching and annotations. This will not
+                        find guides for non-MANE transcripts as input and might lead to reduced guides
+                        for variant and gene input
   -x, --write-parquet   Force writing a new parquet file
-  --be-preset {default,A3A-BE3,ABE7.10,ABE7.10*,ABE7.9,BE-PLUS,BE1,BE2,BE3,BE3-R33A,BE4,
-               BE4-Gam,BE4max,CP-ABEmax variants,eBE-S3,EE-BE3,evoAPOBEC1-BE4max,
-               evoFERNY-BE4max,hA3A-eBE-Y130F,hA3A-eBE-Y132D,hA3A-eBE3,HF-BE3,NG-ABEmax,
-               Target-AID,Target-AID-NG,xABE,xBE3,YE1-BE3,YE2-BE3,YEE-BE3}
+  --be-preset {default,A3A-BE3,ABE7.10,ABE7.10*,ABE7.9,BE-PLUS,BE1,BE2,BE3,BE3-R33A,BE4,BE4-Gam,BE4max,CP-ABEmax variants,eBE-S3,EE-BE3,evoAPOBEC1-BE4max,evoFERNY-BE4max,hA3A-eBE-Y130F,hA3A-eBE-Y132D,hA3A-eBE3,HF-BE3,NG-ABEmax,Target-AID,Target-AID-NG,xABE,xBE3,YE1-BE3,YE2-BE3,YEE-BE3}
                         Use a known base editor to set the guide options
   --filter-synonymous   Pre-filter the output for synonymous guides
   --filter-splice-site  Pre-filter the output for splice_site guides
@@ -244,15 +251,14 @@ options:
   --filter-nonsense     Pre-filter the output for nonsense (stop gain) guides
   --filter-stoplost     Pre-filter the output for stop lost guides
   --filter-startlost    Pre-filter the output for start lost guides
-  --write-bam           Write a BAM file to view your guides in IGV (DO NOT USE THE
-                        SEQUENCES FOR YOUR LIBRARY SINCE REVERSE COMPLEMENT GUIDES WILL BE
-                        WRONG)
+  --write-bam           Write a BAM file to view your guides in IGV (DO NOT USE THE SEQUENCES FOR YOUR
+                        LIBRARY SINCE REVERSE COMPLEMENT GUIDES WILL BE WRONG)
   -n IGNORE_STRING, --ignore-string IGNORE_STRING
                         Substring to be ignored in the variant string
   -a, --all-possible    Design for all ALTs
   -f {variant,vcf,symbol,region}, --input-format {variant,vcf,symbol,region}
-                        Use column(s) "variant" (variant) or "chr", "pos", ("ref",) and
-                        "alt" (vcf) or "symbol" (symbol) in your input
+                        Use column(s) "variant" (variant) or "chr", "pos", ("ref",) and "alt" (vcf) or
+                        "symbol" (symbol) in your input
   -y, --no-splice-sites
                         Exclude splice sites
   --add-vep-annotations, --vep
@@ -268,22 +274,20 @@ options:
   --vep-cache_version VEP_CACHE_VERSION
                         Species for Ensembl's VEP annotations
   --vep-flags VEP_FLAGS
-                        Modify the output of --add-vep-annotations (not all flags might
-                        work). Please provide the flags as string within quotes (e.g. --vep-
-                        flags '--mane --pubmed'). If you only want to use one flag you have
-                        to end the string with a space (e.g. --vep-flags '--everything ').
-                        The following flags should work: --sift [p|s|b], --polyphen [p|s|b],
-                        --ccds, --hgvs, --symbol, --numbers, --domains, --regulatory,
-                        --canonical, --protein, --biotype, --af, --af_1kg, --af_esp,
-                        --af_gnomade, --af_gnomadg, --max_af, --pubmed, --uniprot, --mane,
+                        Modify the output of --add-vep-annotations (not all flags might work). Please
+                        provide the flags as string within quotes (e.g. --vep-flags '--mane
+                        --pubmed'). If you only want to use one flag you have to end the string with a
+                        space (e.g. --vep-flags '--everything '). The following flags should work:
+                        --sift [p|s|b], --polyphen [p|s|b], --ccds, --hgvs, --symbol, --numbers,
+                        --domains, --regulatory, --canonical, --protein, --biotype, --af, --af_1kg,
+                        --af_esp, --af_gnomade, --af_gnomadg, --max_af, --pubmed, --uniprot, --mane,
                         --tsl, --appris, --variant_class, --gene_phenotype, --mirna
   --dbsnp-db DBSNP_DB   Path to dbSNP database for rsID input
   --add-blast-counts, --blast
-                        Add counts of genome wide (main and mitochondrial chromosomes only)
-                        perfect matches using NCBI's BLAST
+                        Add counts of genome wide (main and mitochondrial chromosomes only) perfect
+                        matches using NCBI's BLAST
   --blast-main-chromosomes-only, --no-contigs
-                        BLAST only the main and mitochondrial chromosomes of the reference
-                        genome
+                        BLAST only the main and mitochondrial chromosomes of the reference genome
 
 required arguments:
   -r <PATH>, --ref-genome <PATH>

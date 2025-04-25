@@ -1,0 +1,14 @@
+name: bescreen_full_polarsfixed
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - polars<=1.27.0
+  - pandas
+  - pyarrow
+  - pyfaidx
+  - pyranges
+  - ensembl-vep
+  # - scipy
+  - blast
+  - pysam
