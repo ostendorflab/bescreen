@@ -244,7 +244,7 @@ def arguments():
             edit_window_end = base_editor_presets[be_preset]['window_end']
         if (not '-l' in sys_argvs) and (not '--guide-length' in sys_argvs):
             guidelength = base_editor_presets[be_preset]['guide_length']
-        if (not '-b' in sys_argvs) and (not '--base-change' in sys_argvs):
+        if (not '-b' in sys_argvs) and (not '--base-change' in sys_argvs) and (not '--base-editor' in sys_argvs):
             basechange = base_editor_presets[be_preset]['class'].split(',')
         if (not '-q' in sys_argvs) and (not '--window-start-plus' in sys_argvs):
             edit_window_start_plus = base_editor_presets[be_preset]['plus_start']
