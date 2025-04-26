@@ -1,6 +1,7 @@
 import os
 import sys
 import polars as pl
+import polars.selectors as cs
 import numpy as np
 import pyfaidx
 import pysam
@@ -1353,7 +1354,10 @@ def design_bes(annotation_file,
         for col in [filtercol for filtercol in sgrnas_filtered_out.columns if filtercol not in ['variant', 'base_change', 'strand', 'ref_match']]:
             sgrnas_filtered_out = sgrnas_filtered_out.with_columns(pl.lit("no_guides_found").alias(col))
 
-        sgrnas_not_or_filtered_out = pl.concat([sgrnas_not_to_filter, sgrnas_filtered_out], how="vertical_relaxed").unique() # there shouldn't be any duplicates, but unique() necessary for correct concat
+        sgrnas_not_to_filter = sgrnas_not_to_filter.with_columns((~cs.string()).cast(pl.String))
+        sgrnas_filtered_out = sgrnas_filtered_out.with_columns((~cs.string()).cast(pl.String))
+        sgrnas_not_or_filtered_out = pl.concat([sgrnas_not_to_filter, sgrnas_filtered_out]).unique() # there shouldn't be any duplicates, but unique() necessary for correct concat
+        sgrnas_to_filter = sgrnas_to_filter.with_columns((~cs.string()).cast(pl.String))
         sgrnas = pl.concat([sgrnas_not_or_filtered_out, sgrnas_to_filter])
 
         sgrnas = sgrnas.group_by([col for col in sgrnas.columns if col not in (symbols_to_contract + columns_to_modify_last)], maintain_order=True).agg(pl.all()) # revert back to the original form before exploding
