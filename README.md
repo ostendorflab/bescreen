@@ -22,7 +22,7 @@ conda env create -f envs/environment.yaml # replace environment.yaml with one of
 Before you use BEscreen you also need to activate this environment:
 ```
 # Activate conda environment:
-conda activate bescreen # if not already done; replace bescreen with one of the above mentioned environment names in the parentheses
+conda activate bescreen # replace bescreen with one of the above mentioned environment names in the parentheses
 ```
 
 ### Reference files
