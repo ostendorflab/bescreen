@@ -22,14 +22,15 @@ conda env create -f envs/environment.yaml # replace environment.yaml with one of
 Before you use BEscreen you also need to activate this environment:
 ```
 # Activate conda environment:
-conda activate bescreen # replace bescreen with one of the above mentioned environment names in the parentheses
+conda activate bescreen # if not already done; replace bescreen with one of the above mentioned environment names in the parentheses
 ```
 
 ### Reference files
-You also need to download (and install) some reference files from Ensembl's and NCBI's FTP servers. BEscreen was tested with the Ensembl release 112, but others should also work. If you are working with macOS or Linux, you can use from of the download scripts (`download_(species)_(wget/curl).sh`) to directly download the necessary files to the default locations. Most Linux distributions provide `wget` per default and macOS provides `curl`. So, if you don't have the other tool installed, simply use the `wget` scripts on Linux and the `curl` scripts on macOS. You need to execute the scripts in the root folder of the repository:
+You also need to download (and install) some reference files from Ensembl's and NCBI's FTP servers. BEscreen was tested with the Ensembl release 112, but others should also work. If you are working with macOS or Linux, you can use from of the download scripts (`download_(species)_(wget/curl).sh`) to directly download the necessary files to the default locations. Most Linux distributions provide `wget` per default and macOS provides `curl`. So, if you don't have the other tool installed, simply use the `wget` scripts on Linux and the `curl` scripts on macOS. You need to execute the scripts in the root folder of the repository and you might need to set file permissions before being able to execute them:
 ```
 git clone https://github.com/ostendorflab/bescreen.git # if not already done
 cd bescreen # if not already done
+chmod u+x download_(species)_(wget/curl).sh # sets execution rights for the current user
 ./download_(species)_(wget/curl).sh
 ```
 
@@ -38,29 +39,36 @@ The necessary files are:
 #### The reference genome
 - human: ftp://ftp.ensembl.org/pub/release-112/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
 - mouse: ftp://ftp.ensembl.org/pub/release-112/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz
-- Download the one you need and unzip it.
+- Download the one you need and unzip it (e.g. by using one of the above scripts).
+```
+# to manually unzip it cd into the directory to where you downloaded the (Species).(assembly).dna.primary_assembly.fa.gz file
+gunzip (Species).(assembly).dna.primary_assembly.fa.gz # you can also use other commands that you are familiar with to unzip the file
+```
 - For best compatibility store at `(bescreen/)bescreen/resources/Ensembl/release-112/fasta/(homo_sapiens|mus_musculus)/dna/`
 
 #### The corresponding GTF annotation file
 - human: ftp://ftp.ensembl.org/pub/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.gtf.gz
 - mouse: ftp://ftp.ensembl.org/pub/release-112/gtf/mus_musculus/Mus_musculus.GRCm39.112.gtf.gz
-- Download the one you need.
+- Download the one you need (e.g. by using one of the above scripts).
 - For best compatibility store at `(bescreen/)bescreen/resources/Ensembl/release-112/gtf/(homo_sapiens|mus_musculus)/`
-- To use the annotation file in IGV for viewing your guide BAM you need to sort the GTF (you need tabix for this):
+- To use the annotation file in IGV for viewing your guide BAM you need to sort the GTF (you need bgzip and tabix for this, which should be in the full conda environment):
 ```
-bgzip -d gtf_file.gtf.gz > gtf_file.gtf
-sort -k1,1 -k4,4n -s gtf_file.gtf > gtf_file.sorted.gtf
-bgzip -c gtf_file.sorted.gtf > gtf_file.sorted.gtf.gz
-tabix gtf_file.sorted.gtf.gz
+# cd into the directory to where you downloaded the (Species).(assembly).112.gtf.gz file
+conda activate bescreen # if not already done; replace bescreen with one of the above mentioned environment names in the parentheses
+gunzip -c (Species).(assembly).112.gtf.gz | sort -k1,1 -k4,4n -s | bgzip -c > (Species).(assembly).112.sorted.gtf.gz # alternatively use 'bgzip -cd' instead of 'gunzip -c'
+tabix (Species).(assembly).112.sorted.gtf.gz
 ```
 
 #### The corresponding VEP cache
 - human: ftp://ftp.ensembl.org/pub/release-112/variation/indexed_vep_cache/homo_sapiens_vep_112_GRCh38.tar.gz
 - mouse: ftp://ftp.ensembl.org/pub/release-112/variation/indexed_vep_cache/mus_musculus_vep_112_GRCm39.tar.gz
-- Download the one you need.
+- Download the one you need (e.g. by using one of the above scripts).
 - For best compatibility store at `(bescreen/)bescreen/resources/Ensembl/variation/indexed_vep_cache/`
-- Install it by executing this command in the download folder using your environment (the human cache takes around 27 GB):
+- Install it by executing this command in the download folder using your environment (the human cache takes around 27 GB; you need vep for this, which should be in the full conda environment; if this command fails, use the _vepfixed environment):
 ```
+# cd into the directory to where you downloaded the (species)_vep_112_(assembly).tar.gz file
+conda activate bescreen # if not already done; replace bescreen with one of the above mentioned environment names in the parentheses
+
 # # general command
 # vep_install --AUTO c \
 # --SPECIES {species} \
@@ -92,10 +100,12 @@ vep_install --AUTO c \
 #### The dbSNP VCF
 To use rsIDs from dbSNP as input you need to build a local dbSNP database. To do this first download the dbSNP VCF from here: ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606/VCF/00-All.vcf.gz to here `(bescreen/)bescreen/resources/dbSNP/snp/organisms/human_9606/VCF/`.
 
-If you have done so use the the script `(bescreen/)bescreen/dbsnp_sqlite3.py` to create the local database by executing this command in the download folder using your environment:
+If you have done so use the the script `(bescreen/)bescreen/dbsnp_sqlite3.py` to create the local database by executing the following commands:
 ```
 git clone https://github.com/ostendorflab/bescreen.git # if not already done
 cd bescreen # if not already done
+cd bescreen # yes, once more; you should be in (bescreen/)bescreen/ now
+conda activate bescreen # if not already done; replace bescreen with one of the above mentioned environment names in the parentheses
 python dbsnp_sqlite3.py --dbsnp-vcf resources/dbSNP/snp/organisms/human_9606/VCF/00-All.vcf.gz --rsid-db resources/dbSNP/snp/organisms/human_9606/VCF/rsid.db # adjust the paths according to your needs
 ```
 This might take several hours and needs a lot of memory. If someone you know already generated this file, it might be best to ask them for the file. The generated file will be around 20 GB in size. For best compatibility store the generated `rsid.db` at `(bescreen/)bescreen/resources/dbSNP/snp/organisms/human_9606/VCF/`.
@@ -105,7 +115,7 @@ Now you should be good to go!
 ## Using the command line
 To run BEscreen from the command line interface cd to `(bescreen/)bescreen/` and execute `python bescreen.py -h` for help (output of this see below):
 
-BEscreen takes either variants (in form of genomic positions, rsIDs or protein amino acid changes) or whole genes as input. The input can be provided either directly or within a file. If you use a variant as input the output will contain all base editing guides for this variant. If you use a gene as input the output will be all editing and non-editing guides of this gene's CDS.
+BEscreen takes either variants (in form of genomic positions, rsIDs or protein amino acid changes), whole genes or transcript names or regions as input. The input can be provided either directly or within a file. If you use a variant as input the output will contain all base editing guides for this variant. If you use a gene or region as input the output will be all editing and non-editing guides of this gene's CDS. The first run of BEscreen might take a bit longer since it generates a wrangled file from the annotation file.
 
 ### Variants as input
 Variant inputs need to be provided either as:
@@ -154,7 +164,7 @@ CSV files containing genes need to be formatted as either of the following examp
     ```
 
 ### Regions as input
-If you want to input regions directly, you need to use the form [CHROM]:[START]-[END] (e.g. like this: `12:6536490-6537490`) with the `--regions (-z)` fladg. If you choose to input from file you can use the column `region` as shown in the following example:
+If you want to input regions directly, you need to use the form [CHROM]:[START]-[END] (e.g. like this: `12:6536490-6537490`) with the `--regions (-z)` flad. If you choose to input from file you can use the column `region` as shown in the following example:
 - columns `region`:
     ```
     region
@@ -175,7 +185,7 @@ python bescreen.py --ref-genome path/to/reference_genome.fa --output path/to/out
 
 The minimal command for regions is this:
 ```
-python bescreen.py --ref-genome path/to/reference_genome.fa --output path/to/output_file_with_output_prefix --annotation-file path/to/annotation_file.gtf.gz --region region_one,region_two,region_three
+python bescreen.py --ref-genome path/to/reference_genome.fa --output path/to/output_file_with_output_prefix --annotation-file path/to/annotation_file.gtf.gz --regions region_one,region_two,region_three
 ```
 
 ### Help
