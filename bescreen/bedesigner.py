@@ -1453,16 +1453,19 @@ def output_sgrnas(sgrnas, output_file):
 
 def output_guides_sam(sam_df, output_file, refgenome):
 
-    sam_df.write_csv(output_file + "_filtered.sam", separator='\t', include_header=False)
-    pysam.view(output_file + "_filtered.sam",
-               '-b',
-               '-o', output_file + "_filtered_unsorted.bam",
-               '-t', refgenome + '.fai',
-               catch_stdout=False)
-    os.remove(output_file + "_filtered.sam")
-    pysam.sort('-o', output_file + "_filtered.bam", output_file + "_filtered_unsorted.bam") # should already be sorted, but this acts as a failsafe
-    os.remove(output_file + "_filtered_unsorted.bam")
-    pysam.index(output_file + "_filtered.bam")
+    if not sam_df.is_empty():
+        sam_df.write_csv(output_file + "_filtered.sam", separator='\t', include_header=False)
+        pysam.view(output_file + "_filtered.sam",
+                '-b',
+                '-o', output_file + "_filtered_unsorted.bam",
+                '-t', refgenome + '.fai',
+                catch_stdout=False)
+        os.remove(output_file + "_filtered.sam")
+        pysam.sort('-o', output_file + "_filtered.bam", output_file + "_filtered_unsorted.bam") # should already be sorted, but this acts as a failsafe
+        os.remove(output_file + "_filtered_unsorted.bam")
+        pysam.index(output_file + "_filtered.bam")
+    else:
+        print("No variant guides could be identified: No BAM file will be written.")
 
 
 if __name__ == "__main__":
