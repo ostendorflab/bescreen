@@ -1319,14 +1319,14 @@ def design_bes(annotation_file,
         if filter_startlost:
             sgrnas_to_filter = sgrnas_to_filter.filter(pl.col('consequence').str.contains("startlost") | pl.col('consequence').str.contains("STARTLOST"))
 
-        # sgrnas_not_to_filter_list = sgrnas_not_to_filter.with_columns(
-        #                                     pl.concat_str(
-        #                                         [
-        #                                             pl.col("variant"),
-        #                                             pl.col("base_change"),
-        #                                         ],
-        #                                         separator="_",
-        #                                     ).alias("variant_base_editor"))['variant_base_editor'].to_list()
+        sgrnas_not_to_filter_list = sgrnas_not_to_filter.with_columns(
+                                            pl.concat_str(
+                                                [
+                                                    pl.col("variant"),
+                                                    pl.col("base_change"),
+                                                ],
+                                                separator="_",
+                                            ).alias("variant_base_editor"))['variant_base_editor'].to_list()
 
         sgrnas_to_filter_list = sgrnas_to_filter.with_columns(
                                             pl.concat_str(
@@ -1337,7 +1337,7 @@ def design_bes(annotation_file,
                                                 separator="_",
                                             ).alias("variant_base_editor"))['variant_base_editor'].to_list()
 
-        # sgrnas_after_filter = sgrnas_not_to_filter_list + sgrnas_to_filter_list
+        sgrnas_after_filter = sgrnas_not_to_filter_list + sgrnas_to_filter_list
 
         sgrnas_filtered_out = sgrnas.with_columns(
                                             pl.concat_str(
@@ -1347,8 +1347,7 @@ def design_bes(annotation_file,
                                                 ],
                                                 separator="_",
                                             ).alias("variant_base_editor")
-                                            # ).filter(~pl.col('variant_base_editor').is_in(sgrnas_after_filter)
-                                            ).filter(~pl.col('variant_base_editor').is_in(sgrnas_to_filter_list)
+                                            ).filter(~pl.col('variant_base_editor').is_in(sgrnas_after_filter)
                                                      ).drop('variant_base_editor')
 
         for col in [filtercol for filtercol in sgrnas_filtered_out.columns if filtercol not in ['variant', 'base_change', 'strand', 'ref_match']]:
