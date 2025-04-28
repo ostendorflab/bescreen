@@ -1,9 +1,9 @@
-name: bescreen_full_pippolars
+name: bescreen_full_polarsltscpu
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  # - polars
+  - polars-lts-cpu
   - pandas
   - pyarrow
   - pyfaidx
@@ -12,6 +12,3 @@ dependencies:
   # - scipy
   - blast
   - pysam
-  - pip
-  - pip:
-    - polars
