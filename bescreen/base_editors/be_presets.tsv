@@ -3,7 +3,7 @@ A3A-BE3	C-to-T	4	8			20	NGG						beditor	false	true	*Cas9	3prime
 ABE7.10	A-to-G	4	7		1	20	NGG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
 ABE7.10*	A-to-G	4	8	2	1	20	NGG	17	13	18–19	12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
 ABE7.9	A-to-G	5	8	1	1	20	NGG	16	13	17	12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
-ABE8e	A-to-G	3	8			20							Sheriff et al, 2022	false	true		
+ABE8e	A-to-G	3	8			20	NGG						Sheriff et al, 2022	false	true	*Cas9	3prime
 BE-PLUS	C-to-T	4	14		2	20	NGG	17	7		5–6	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
 BE1	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
 BE2	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
@@ -45,8 +45,8 @@ hA3A-eBE-Y132D	C-to-T	3	7			20	NGG					no edit given, but all CBE?	BEable-GPS	fa
 hA3A-eBE3	C-to-T	2	13			20	NGG					no edit given, but all CBE?	BEable-GPS	false	true	*Cas9	3prime
 HF-BE3	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
 NG-ABEmax	A-to-G	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
-TadCBEd	C-to-T	3	9			20							Neugebauer et al, 2023	false	true		
-TadCBE variants	C-to-T	3	8			20							Neugebauer et al, 2023	false	true		
+TadCBEd	C-to-T	3	9			20	NGG						Neugebauer et al, 2023	false	true	*Cas9	3prime
+TadCBE variants	C-to-T	3	8			20	NGG						Neugebauer et al, 2023	false	true	*Cas9	3prime
 Target-AID	C-to-T	2	4		4	20	NGG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
 Target-AID-NG	C-to-T	2	4		4	20	NG	19	17		13–16	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
 unusable_BE3-R33A/K34A	C-to-T	5	6			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false	*Cas9	3prime
@@ -55,7 +55,7 @@ unusable_eA3A-BE3	C-to-T	4	8			20	NGG					unusable?	beditor	false	false	*Cas9	3p
 unusable_eA3A-BE3	C-to-T	4	8	2	3	20	NGG	17	13	18–19	10–12	counted from PAM; length not given; set to 20; when C comes after T (discard)	BE-FF	false	false	*Cas9	3prime
 unusable_eA3А-BE3	C-to-T	4	8			20	NGG					no edit given, but all CBE?; TC? (when C comes after T (discard))	BEable-GPS	false	false	*Cas9	3prime
 unusable_evoCDA1-BE4max	C-to-T	1	12		2	20	NGG	20	9		7–8	counted from PAM; length not given; set to 20;* may exhibit editing upstream to the protospacer	BE-FF	false	false	*Cas9	3prime
-V106W-TadCBE variants	C-to-T	3	8			20							Neugebauer et al, 2023	false	true		
+V106W-TadCBE variants	C-to-T	3	8			20	NGG						Neugebauer et al, 2023	false	true	*Cas9	3prime
 xABE	A-to-G	4	7		1	20	NG	17	14		13	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
 xBE3	C-to-T	4	8	2	3	20	NG	17	13	18–19	10–12	counted from PAM; length not given; set to 20	BE-FF	false	true	NG-*Cas9	3prime
 YE1-BE3	C-to-T	5	7	1		20	NGG	16	14	17		counted from PAM; length not given; set to 20	BE-FF	false	true	*Cas9	3prime
