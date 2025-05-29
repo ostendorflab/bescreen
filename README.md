@@ -309,5 +309,5 @@ required arguments:
 ```
 
 # Cite BEscreen
-[BEscreen: a versatile toolkit to design base editing libraries](https://doi.org/10.1093/nar/gkaf406) has been published in the Nucleic Acids Research Web Server Issue 2025. Please cite this article, if you are using BEscreen:
+[BEscreen: a versatile toolkit to design base editing libraries](https://doi.org/10.1093/nar/gkaf406) has been published in the Nucleic Acids Research Web Server Issue 2025. Please cite this article, if you are using BEscreen:<br>
 Philipp G Schneider, Shuang Liu, Lars Bullinger, Benjamin N Ostendorf, BEscreen: a versatile toolkit to design base editing libraries, Nucleic Acids Research, 2025;, gkaf406, https://doi.org/10.1093/nar/gkaf406
