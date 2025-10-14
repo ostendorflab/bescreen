@@ -826,6 +826,7 @@ def design_bes(annotation_file,
                             codonss_edited = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
                             aass = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
                             aass_edited = [['no_CDS_found']] # [tuple(['no_CDS_found'])] (not necessary anymore with polars)
+                            consequences = [['no_CDS_found']]
                             aa_positionss = [['no_CDS_found']]
                             splice_sites_included = ['no_CDS_found'] # [str(False)]
                             synonymouss = ['no_CDS_found'] # [str(False)]
