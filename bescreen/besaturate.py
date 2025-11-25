@@ -83,15 +83,32 @@ def saturate_bes(annotation_file,
     elif gene_symbols:
         gene_symbols_list = gene_symbols.replace(' ', '').split(",")
 
-    real_gene_symbols_list = [gene for gene in gene_symbols_list if len(gene.split('-')) == 1]
-    transcript_symbols_list = [transcript for transcript in gene_symbols_list if len(transcript.split('-')) == 2]
-    genes_malformed = [gene for gene in gene_symbols_list if len(gene.split('-')) not in [1, 2]]
+    # real_gene_symbols_list = [gene for gene in gene_symbols_list if len(gene.split('-')) == 1] # some genes have hyphen in their name, so this solution is wrong
+    # transcript_symbols_list = [transcript for transcript in gene_symbols_list if len(transcript.split('-')) == 2] # some genes have hyphen in their name, so this solution is wrong
+    # genes_malformed = [gene for gene in gene_symbols_list if len(gene.split('-')) not in [1, 2]] # some genes have hyphen in their name, so this solution is wrong
 
     ref_genome_pyfaidx = pyfaidx.Fasta(ref_genome)
 
     parquet_file = shared.check_parquet(annotation_file, write_parquet)
 
     cdss = pl.read_parquet(parquet_file)
+
+    all_genes = cdss.get_column('gene_name').unique().to_list()
+    all_transcripts = cdss.get_column('transcript_name').unique().to_list()
+    all_genes_transcripts = all_genes + all_transcripts
+    all_genes = set(all_genes)
+    all_transcripts = set(all_transcripts)
+    all_genes_transcripts = set(all_genes_transcripts)
+
+    # real_gene_symbols_list = [gene for gene in gene_symbols_list if gene in all_genes] # this works and keeps duplicates; not sure what's better
+    # transcript_symbols_list = [transcript for transcript in gene_symbols_list if transcript in all_transcripts] # this works and keeps duplicates; not sure what's better
+    # genes_malformed = [malformed for malformed in gene_symbols_list if malformed not in all_genes_transcripts] # this works and keeps duplicates; not sure what's better
+
+    gene_symbols_set = set(gene_symbols_list) # this works and removes duplicates; not sure what's better
+
+    real_gene_symbols_list = list(gene_symbols_set & all_genes) # this works and removes duplicates; not sure what's better
+    transcript_symbols_list = list(gene_symbols_set & all_transcripts) # this works and removes duplicates; not sure what's better
+    genes_malformed = list(gene_symbols_set - all_genes_transcripts) # this works and removes duplicates; not sure what's better
 
     if mane_select_only:
         cdss = cdss.filter(pl.col('MANE_Select'))
