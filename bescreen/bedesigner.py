@@ -139,6 +139,7 @@ def design_bes(annotation_file,
     all_target_seq = []
     all_target_base_ref = []
     all_target_base = []
+    all_vars_with_bys = []
     all_possible_guides_with_pam = []
     all_edit_strings = []
     all_edit_pos_strings = []
@@ -453,6 +454,7 @@ def design_bes(annotation_file,
             if editable:
 
                 # lists per variant
+                vars_with_bys = []
                 possible_guides_with_pam = []
                 possible_guides = []
                 possible_pams = []
@@ -557,6 +559,11 @@ def design_bes(annotation_file,
                                 variant_pos_rel = i
 
                         total_poss = [position - (variant_pos_rel - m) for m in edit_list]
+
+                        var_with_by = ';'.join(['_'.join([chrom,
+                                                          str(total_pos + 1), # transform position back to VCF POS, which is 1-based
+                                                          target_base_ref,
+                                                          edits[target_base_ref]]) for total_pos in total_poss])
 
                         cdss_filtered = cdss.filter((pl.col('Chromosome') == chrom) &
                                                     (pl.col('Start') - 2 <= position) &
@@ -941,6 +948,7 @@ def design_bes(annotation_file,
                             distance_to_center = distance_to_center[::-1]
 
                         # main fields
+                        vars_with_bys.append(var_with_by)
                         possible_guides_with_pam.append(possible_guide_with_pam)
                         possible_guides.append(possible_guide)
                         possible_pams.append(possible_pam)
@@ -991,6 +999,7 @@ def design_bes(annotation_file,
                 if possible_guides == []:
                     gene_symbolss.append(["no_guides_found"])
                     possible_guides.append("no_guides_found")
+                    vars_with_bys.append("no_guides_found")
                     possible_guides_with_pam.append("no_guides_found")
                     edit_windows.append("no_guides_found")
                     num_editss.append("no_guides_found")
@@ -1035,6 +1044,7 @@ def design_bes(annotation_file,
                 all_target_seq.append(target_seq)
                 all_target_base_ref.append(target_base_ref)
                 all_target_base.append(target_base)
+                all_vars_with_bys.append(vars_with_bys) # list
                 all_possible_guides_with_pam.append(possible_guides_with_pam) # list
                 all_edit_strings.append(edit_strings) # list
                 all_edit_pos_strings.append(edit_pos_strings) # list
@@ -1088,6 +1098,7 @@ def design_bes(annotation_file,
                 all_target_seq.append("") # not in output
                 all_target_base_ref.append(target_base_ref) # not in output
                 all_target_base.append("") # not in output
+                all_vars_with_bys.append(["be_not_usable"])
                 all_possible_guides_with_pam.append(["be_not_usable"])
                 all_edit_strings.append(["be_not_usable"])
                 all_edit_pos_strings.append(["be_not_usable"])
@@ -1136,6 +1147,7 @@ def design_bes(annotation_file,
                            "guide_with_pam": all_possible_guides_with_pam,
                            "edit_window": all_edit_window,
                            "num_edits": all_num_edits,
+                           "variant_and_bystanders": all_vars_with_bys,
                            "specific": all_specific,
                            "edit_window_plus": all_edit_window_plus,
                            "num_edits_plus": all_num_edits_plus,
