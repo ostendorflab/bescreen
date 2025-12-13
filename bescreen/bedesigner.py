@@ -1206,8 +1206,23 @@ def design_bes(annotation_file,
     # add vep annotations, if wanted
     if vep:
 
-        variants_vep = pl.DataFrame({'variant': all_variant_real}).with_row_index('for_sorting_later')
-        variants_non_vep = variants_vep.filter(pl.col('variant').is_in(['variant_is_improperly_formatted',
+        variants_vep = pl.DataFrame(
+            {'variant': all_vars_with_bys}
+            ).with_row_index(
+                'for_sorting_third'
+                ).explode(
+                    "variant"
+                    ).with_row_index(
+                'for_sorting_second'
+                ).with_columns(
+                    pl.col("variant").str.split(";").alias("variant")
+                    ).explode(
+                    "variant"
+                    ).with_row_index(
+                'for_sorting_first'
+                )
+        variants_non_vep = variants_vep.filter(pl.col('variant').is_in(['be_not_usable',
+                                                                        'variant_is_improperly_formatted',
                                                                         'no_input_gene_given',
                                                                         'no_input_transcript_given',
                                                                         'no_input_mutation_given',
@@ -1220,7 +1235,8 @@ def design_bes(annotation_file,
                                                                         'non_existent_input_rsID',
                                                                         'genomic_position_not_numeric',
                                                                         'genomic_coordinates_not_found']))
-        variants_vep = variants_vep.filter(~pl.col('variant').is_in(['variant_is_improperly_formatted',
+        variants_vep = variants_vep.filter(~pl.col('variant').is_in(['be_not_usable',
+                                                                     'variant_is_improperly_formatted',
                                                                      'no_input_gene_given',
                                                                      'no_input_transcript_given',
                                                                      'no_input_mutation_given',
@@ -1256,7 +1272,22 @@ def design_bes(annotation_file,
         for col in [col for col in vep_annotations.columns if col in variants_vep_resorted.columns]: # is there a better way?
             variants_non_vep = variants_non_vep.with_columns(pl.lit("not_suitable_for_VEP").alias(col))
 
-        variants_vep_resorted = pl.concat([variants_vep_resorted, variants_non_vep]).sort('for_sorting_later').drop('for_sorting_later')
+        variants_vep_resorted = pl.concat([variants_vep_resorted, variants_non_vep]).sort(
+            ['for_sorting_first', 'for_sorting_second', 'for_sorting_third']
+            ).drop(
+                'for_sorting_first'
+                ).group_by(['for_sorting_second', 'for_sorting_third'], maintain_order=True).agg(
+                pl.all()
+                ).with_columns(
+                    pl.exclude(['for_sorting_second', 'for_sorting_third']).list.join(";")).sort(
+            ['for_sorting_second', 'for_sorting_third']
+            ).drop(
+                'for_sorting_second'
+                ).group_by('for_sorting_third', maintain_order=True).agg(
+                pl.all()
+                ).drop(
+                'for_sorting_third'
+                )
 
         variants_vep_resorted = variants_vep_resorted.select(pl.exclude(["original_index", "variant"]))
         sgrnas = sgrnas.with_columns(variants_vep_resorted)
@@ -1288,8 +1319,8 @@ def design_bes(annotation_file,
                         'originally_intended_ALT',
                         'ref_match']
 
-    if vep:
-        non_list_columns += variants_vep_resorted.columns
+    # if vep:
+    #     non_list_columns += variants_vep_resorted.columns
 
     columns_to_modify_last = [col for col in sgrnas.columns if col not in non_list_columns]
 
