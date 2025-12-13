@@ -7,6 +7,10 @@ To run BEscreen, you need to run the script `bescreen.py` in a Python environmen
 - `environment_full.yaml (bescreen_full)`: The environment for the command line version with Ensembl's VEP and NCBI's BLAST.
 - `environment_full_vepfixed.yaml (bescreen_full_vepfixed)`: The environment for the command line version with Ensembl's VEP with fixed version and NCBI's BLAST (use this if the one without version fixing doesn't work).
 
+WARNING: If you use macOS and the Rosetta2 emulator (which you need, if you want to install VEP using conda), Polars >= 1.27.1 will raise an error. If you encounter this error, you need to install an older version of Polars or the polars-lts-cpu version of Polars. We provide fixed environment files for both:
+- `environment_full_polarsfixed.yaml (bescreen_full_polarsfixed)`: The environment for the command line version with Ensembl's VEP and NCBI's BLAST and Polars with fixed version (use this if the one without version fixing doesn't work).
+- `environment_full_polarsltscpu.yaml (bescreen_full_polarsltscpu)`: The environment for the command line version with Ensembl's VEP and NCBI's BLAST and the polars-lts-cpu version of Polars (use this if the one without version fixing doesn't work).
+
 To install one of these environments run:
 ```
 # install a conda distribution like mini-forge
