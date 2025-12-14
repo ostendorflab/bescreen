@@ -7,6 +7,7 @@ import get_vep
 import shared
 import blast_guides
 import itertools
+import copy
 
 
 def saturate_region(ref_genome,
@@ -34,7 +35,7 @@ def saturate_region(ref_genome,
     if guidelength < 17:
         raise ValueError('Please set the guide length to at least 17 bp!')
 
-    bes = shared.bes
+    bes = copy.deepcopy(shared.bes)
 
     if fiveprimepam:
          # swich fwd and rev for edits

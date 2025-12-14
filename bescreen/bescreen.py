@@ -6,6 +6,7 @@ import bedesigner
 import besaturate
 import beregion
 import shared
+import copy
 
 
 def arguments():
@@ -61,7 +62,7 @@ def arguments():
                         default=8, type=int)
     parser.add_argument('-l', '--guide-length', help='Length of guide (the minimum is 17 bp)',
                         default=20, type=int)
-    base_changes_cli = shared.bes
+    base_changes_cli = copy.deepcopy(shared.bes)
     base_changes_tmp = {}
     for be in base_changes_cli:
         if base_changes_cli[be]['group'] in base_changes_tmp.keys():

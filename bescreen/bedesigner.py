@@ -10,6 +10,7 @@ import dbsnp_sqlite3
 import protein_variant
 import blast_guides
 import itertools
+import copy
 
 
 def design_bes(annotation_file,
@@ -51,7 +52,7 @@ def design_bes(annotation_file,
     if guidelength < 17:
         raise ValueError('Please set the guide length to at least 17 bp!')
 
-    bes = shared.bes
+    bes = copy.deepcopy(shared.bes)
     for be in bes: # delete unneeded keys, which disturb correct iteration
         keys_to_delete = [key for key in bes[be].keys() if key not in ['fwd', 'rev']]
         for key_to_delete in keys_to_delete:
