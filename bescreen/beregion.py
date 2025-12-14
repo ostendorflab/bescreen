@@ -35,6 +35,8 @@ def saturate_region(ref_genome,
     if guidelength < 17:
         raise ValueError('Please set the guide length to at least 17 bp!')
 
+    iupac_nt_code = copy.deepcopy(shared.iupac_nt_code)
+
     bes = copy.deepcopy(shared.bes)
 
     if fiveprimepam:
@@ -78,7 +80,7 @@ def saturate_region(ref_genome,
     pamsite_relevant = pamsite.lstrip('N') # needs to be rstrip() for 5' PAM
 
     pamlist = list(pamsite_relevant)
-    pamlist_real = [shared.iupac_nt_code.get(item, item) for item in pamlist]
+    pamlist_real = [iupac_nt_code.get(item, item) for item in pamlist]
     pamlist_real_all = list(itertools.product(*pamlist_real))
     pamlist_real_string = [''.join(pam_real_string) for pam_real_string in pamlist_real_all]
 

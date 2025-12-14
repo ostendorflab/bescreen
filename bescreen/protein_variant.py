@@ -1,12 +1,15 @@
 import sys
 import polars as pl
 import shared
+import copy
 
 def get_variant_from_protein(transcript,
                              mutation,
                              bescreen_annotation,
                              bescreen_ref_genome,
                              snvs_only):
+
+    codon_sun_one_letter = copy.deepcopy(shared.codon_sun_one_letter)
 
     # generate genome cds transformational information
     cds = '' # full cds for translation
@@ -53,23 +56,23 @@ def get_variant_from_protein(transcript,
     aaseq = '' # full aa sequence
 
     for i in range(3, len(cds)+1, 3):
-        aaseq += shared.codon_sun_one_letter[cds[i-3:i]]
+        aaseq += codon_sun_one_letter[cds[i-3:i]]
 
     # get genomic position of mutation
     # format needs to be: [one original aa][position in protein][one mutated aa]
 
     aa_ref = mutation[0]
-    if not aa_ref in shared.codon_sun_one_letter.values():
+    if not aa_ref in codon_sun_one_letter.values():
         return ['reference_not_amino_acid']
     aa_mut = mutation[-1]
-    if not aa_mut in shared.codon_sun_one_letter.values():
+    if not aa_mut in codon_sun_one_letter.values():
         return ['mutation_not_amino_acid']
     position_mut = mutation[1:-1]
     if position_mut.isnumeric():
         position_mut = int(position_mut)
     else:
         return ['input_position_not_numeric']
-    alt_codons = [k for k,v in shared.codon_sun_one_letter.items() if v == aa_mut]
+    alt_codons = [k for k,v in codon_sun_one_letter.items() if v == aa_mut]
 
     exon_found = False
 

@@ -52,6 +52,9 @@ def design_bes(annotation_file,
     if guidelength < 17:
         raise ValueError('Please set the guide length to at least 17 bp!')
 
+    iupac_nt_code = copy.deepcopy(shared.iupac_nt_code)
+    codon_sun_one_letter = copy.deepcopy(shared.codon_sun_one_letter)
+
     bes = copy.deepcopy(shared.bes)
     for be in bes: # delete unneeded keys, which disturb correct iteration
         keys_to_delete = [key for key in bes[be].keys() if key not in ['fwd', 'rev']]
@@ -241,7 +244,7 @@ def design_bes(annotation_file,
     distance_median_dict = shared.qc_precalc(edit_window_start, edit_window_end)
 
     # only need to do this once
-    non_stop_aas = list(set([x for x in shared.codon_sun_one_letter.values() if x != 'Stop']))
+    non_stop_aas = list(set([x for x in codon_sun_one_letter.values() if x != 'Stop']))
     any_filter = any([filter_synonymous,
                       filter_splice_site,
                       filter_specific,
@@ -311,7 +314,7 @@ def design_bes(annotation_file,
             pam_relevant = pam.lstrip('N') # needs to be rstrip() for 5' PAM
 
             pamlist = list(pam_relevant)
-            pamlist_real = [shared.iupac_nt_code.get(item, item) for item in pamlist]
+            pamlist_real = [iupac_nt_code.get(item, item) for item in pamlist]
             pamlist_real_all = list(itertools.product(*pamlist_real))
             pamlist_real_string = [''.join(pam_real_string) for pam_real_string in pamlist_real_all]
 
@@ -625,10 +628,10 @@ def design_bes(annotation_file,
                                                 codon = shared.revcom(codon)
                                                 codon_edited = shared.revcom(codon_edited)
 
-                                            aa = shared.codon_sun_one_letter[codon]
-                                            aa_edited = shared.codon_sun_one_letter[codon_edited]
+                                            aa = codon_sun_one_letter[codon]
+                                            aa_edited = codon_sun_one_letter[codon_edited]
 
-                                            if aa == shared.codon_sun_one_letter["ATG"] and exon_number == first_transcript_exon: # startcodon
+                                            if aa == codon_sun_one_letter["ATG"] and exon_number == first_transcript_exon: # startcodon
                                                 if (row['Strand'] == '+' and (row["Start"] <= edit < (row["Start"] + 3))) or (row['Strand'] == '-' and ((row["End"] - 3) <= edit < row["End"])):
                                                     codon = "Start" + codon
                                                     aa = "Start" + aa
@@ -673,10 +676,10 @@ def design_bes(annotation_file,
                                                 if str(row['Strand']) == '-':
                                                     codon = shared.revcom(codon)
                                                     codon_edited = shared.revcom(codon_edited)
-                                                aa = shared.codon_sun_one_letter[codon]
-                                                aa_edited = shared.codon_sun_one_letter[codon_edited]
+                                                aa = codon_sun_one_letter[codon]
+                                                aa_edited = codon_sun_one_letter[codon_edited]
 
-                                                if aa == shared.codon_sun_one_letter["ATG"] and exon_number == first_transcript_exon:
+                                                if aa == codon_sun_one_letter["ATG"] and exon_number == first_transcript_exon:
                                                     if (row['Strand'] == '+' and (row["Start"] <= edit < (row["Start"] + 3))) or (row['Strand'] == '-' and ((row["End"] - 3) <= edit < row["End"])):
                                                         codon = "Start" + codon
                                                         aa = "Start" + aa
