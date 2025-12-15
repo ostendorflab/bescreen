@@ -1225,7 +1225,8 @@ def design_bes(annotation_file,
                     ).with_row_index(
                 'for_sorting_first'
                 )
-        variants_non_vep = variants_vep.filter(pl.col('variant').is_in(['be_not_usable',
+        variants_non_vep = variants_vep.filter(pl.col('variant').is_in(['no_guides_found',
+                                                                        'be_not_usable',
                                                                         'variant_is_improperly_formatted',
                                                                         'no_input_gene_given',
                                                                         'no_input_transcript_given',
@@ -1239,7 +1240,8 @@ def design_bes(annotation_file,
                                                                         'non_existent_input_rsID',
                                                                         'genomic_position_not_numeric',
                                                                         'genomic_coordinates_not_found']))
-        variants_vep = variants_vep.filter(~pl.col('variant').is_in(['be_not_usable',
+        variants_vep = variants_vep.filter(~pl.col('variant').is_in(['no_guides_found',
+                                                                     'be_not_usable',
                                                                      'variant_is_improperly_formatted',
                                                                      'no_input_gene_given',
                                                                      'no_input_transcript_given',
