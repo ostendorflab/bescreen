@@ -55,7 +55,7 @@ gunzip (Species).(assembly).dna.primary_assembly.fa.gz # you can also use other 
 ```
 # cd into the directory to where you downloaded the (Species).(assembly).112.gtf.gz file
 conda activate bescreen # if not already done; replace bescreen with one of the above mentioned environment names in the parentheses
-gunzip -c (Species).(assembly).112.gtf.gz | sort -k1,1 -k4,4n -s | bgzip -c > (Species).(assembly).112.sorted.gtf.gz # alternatively use 'bgzip -cd' instead of 'gunzip -c'
+gunzip -c (Species).(assembly).112.gtf.gz | sort -n -k1,1 -k4,4n -s | bgzip -c > (Species).(assembly).112.sorted.gtf.gz # alternatively use 'bgzip -cd' instead of 'gunzip -c'
 tabix (Species).(assembly).112.sorted.gtf.gz
 ```
 
