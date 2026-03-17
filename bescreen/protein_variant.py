@@ -80,15 +80,18 @@ def get_variant_from_protein(transcript,
         start_cds = (position_mut-1) * 3 # transform bases to aa
         end_cds = ((position_mut-1) * 3) + 3 # transform bases to aa
 
-        while not exon_found:
+        # while not exon_found: # while loop is looped infinitely, if codon is exon-spanning
 
-            for index, exon_range in enumerate(exon_ranges): # find exon with overlap; does this also find partial overlaps?
+        for index, exon_range in enumerate(exon_ranges): # find exon with overlap; does this also find partial overlaps? No, it does not
 
-                if set(range(start_cds, end_cds)).issubset(set(exon_range)):
-                    index_found = index
-                    exon_range_found = exon_range
-                    exon_found = True
-                    break
+            if set(range(start_cds, end_cds)).issubset(set(exon_range)):
+                index_found = index
+                exon_range_found = exon_range
+                exon_found = True
+                break
+
+        if exon_found == False:
+            return ['putative_exon_spanning_codon']
 
         if strands[index_found] == '+':
             genome_start = genome_ranges[index_found][0] + (start_cds-exon_range_found[0])
