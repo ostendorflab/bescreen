@@ -7,7 +7,9 @@ def get_variant_from_protein(transcript,
                              mutation,
                              bescreen_annotation,
                              bescreen_ref_genome,
-                             snvs_only):
+                             snvs_only,
+                             gene_names,
+                             transcript_names):
 
     codon_sun_one_letter = copy.deepcopy(shared.codon_sun_one_letter)
 
@@ -28,12 +30,14 @@ def get_variant_from_protein(transcript,
     if mutation == '':
         return ['no_input_mutation_given']
 
-    if len(transcript.split('-')) == 2:
+    # if len(transcript.split('-')) == 2: # does not work, since some genes have hyphen
+    if transcript in transcript_names:
         transcript_exons = bescreen_annotation.filter(pl.col('transcript_name') == transcript).sort('exon_number') # maybe they are already sorted, but make sure
         if transcript_exons.is_empty():
             return ['input_transcript_not_found']
 
-    elif len(transcript.split('-')) == 1:
+    # elif len(transcript.split('-')) == 1: # does not work, since some genes have hyphen
+    elif transcript in gene_names:
         transcript_exons = bescreen_annotation.filter((pl.col('gene_name') == transcript) & pl.col('MANE_Select')).sort('exon_number') # maybe they are already sorted, but make sure
         if transcript_exons.is_empty():
             return ['input_gene_not_found']

@@ -211,9 +211,18 @@ def design_bes(annotation_file,
     # transcript mutations to transform
     tmuts = []
 
+    # generate sets of genes and transcripts
+    all_genes = cdss.get_column('gene_name').unique().to_list()
+    all_transcripts = cdss.get_column('transcript_name').unique().to_list()
+    all_genes_transcripts = all_genes + all_transcripts
+    all_genes = set(all_genes)
+    all_transcripts = set(all_transcripts)
+    all_genes_transcripts = set(all_genes_transcripts)
+
     # identify transcript mutations in variants
     for variant in variant_list:
-        if len(variant.split("_")) == 1 and len(variant.split("-")) in [2, 3]: # tmuts
+        # if len(variant.split("_")) == 1 and len(variant.split("-")) in [2, 3]: # tmuts; does not work, since some genes have hyphen
+        if len(variant.split("_")) == 1 and '-'.join(variant.split("-")[0:-1]) in all_genes_transcripts: # tmuts
             tmuts.append(variant)
 
     for tmut in tmuts:
@@ -232,7 +241,9 @@ def design_bes(annotation_file,
                                                                mut_tmutvar,
                                                                cdss,
                                                                ref_genome_pyfaidx,
-                                                               True)
+                                                               True,
+                                                               all_genes,
+                                                               all_transcripts)
 
             for tmutsnp in tmutvar:
                 tmutvars.append(f'{tmut}:{tmutsnp}')
@@ -269,7 +280,8 @@ def design_bes(annotation_file,
             if len(variant_coords) == 4 and variant_coords[0].startswith('rs'):
                 rsidchrom, position, ref, alt = variant_coords
                 rsid, chrom = rsidchrom.split(":")
-            elif len(variant_coords) == 4 and len(variant_coords[0].split("-")) in [2, 3]:
+            # elif len(variant_coords) == 4 and len(variant_coords[0].split("-")) in [2, 3]: # does not work, since some genes have hyphen
+            elif len(variant_coords) == 4 and '-'.join(variant_coords[0].split("-")[0:-1]) in all_genes_transcripts:
                 tmutchrom, position, ref, alt = variant_coords
                 tmut, chrom = tmutchrom.split(":")
             elif len(variant_coords) == 4: # REF given
@@ -439,7 +451,8 @@ def design_bes(annotation_file,
                 variant.endswith('genomic_coordinates_not_found') or
                 variant.endswith('variant_is_improperly_formatted')):
                 variant_real = rsidtmutvariant[1]
-            elif len(rsidtmutvariant) == 2 and (variant_real.startswith('rs') or len(rsidtmutvariant[0].split("-")) in [2, 3]):
+            # elif len(rsidtmutvariant) == 2 and (variant_real.startswith('rs') or len(rsidtmutvariant[0].split("-")) in [2, 3]): # does not work, since some genes have hyphen
+            elif len(rsidtmutvariant) == 2 and (variant_real.startswith('rs') or '-'.join(rsidtmutvariant[0].split("-")[0:-1]) in all_genes_transcripts):
                 variant_real = rsidtmutvariant[1]
             if allpossible and target_base_ref not in ['variant_is_improperly_formatted',
                                                     'no_input_gene_given',
