@@ -95,7 +95,7 @@ def get_variant_from_protein(transcript,
                 break
 
         if exon_found == False:
-            return ['putative_exon_spanning_codon']
+            return ['putative_intron_spanning_codon']
 
         if strands[index_found] == '+':
             genome_start = genome_ranges[index_found][0] + (start_cds-exon_range_found[0])
