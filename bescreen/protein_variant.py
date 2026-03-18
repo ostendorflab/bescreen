@@ -123,10 +123,11 @@ def get_variant_from_protein(transcript,
             generated_variants.append(edited_codon)
 
         if snvs_only:
-            return [''.join(generated_variant) for generated_variant in generated_variants if len(generated_variant) == 1] # list of snvs leading to desired aa change
+            generated_variant = [''.join(generated_variant) for generated_variant in generated_variants if len(generated_variant) == 1] # list of snvs leading to desired aa change
+            return generated_variant if generated_variant else ['no_suitable_snv_found']
 
         else:
-            return generated_variants # list of variants leading to desired aa change
+            return generated_variants if generated_variants else ['no_suitable_mutation_found'] # list of variants leading to desired aa change; list should never be empty in this case
 
     else:
         return ['wrong_reference_amino_acid']

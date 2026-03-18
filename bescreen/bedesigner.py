@@ -307,6 +307,8 @@ def design_bes(annotation_file,
                     variant.endswith('mutation_not_amino_acid') or
                     variant.endswith('input_position_not_numeric') or
                     variant.endswith('putative_intron_spanning_codon') or
+                    variant.endswith('no_suitable_snv_found') or
+                    variant.endswith('no_suitable_mutation_found') or
                     variant.endswith('wrong_reference_amino_acid') or
                     variant.endswith('non_existent_input_rsID') or
                     variant.endswith('variant_is_improperly_formatted')):
@@ -361,6 +363,10 @@ def design_bes(annotation_file,
                 target_base_ref = 'input_position_not_numeric'
             elif variant.endswith('putative_intron_spanning_codon'):
                 target_base_ref = 'putative_intron_spanning_codon'
+            elif variant.endswith('no_suitable_snv_found'):
+                target_base_ref = 'no_suitable_snv_found'
+            elif variant.endswith('no_suitable_mutation_found'):
+                target_base_ref = 'no_suitable_mutation_found'
             elif variant.endswith('wrong_reference_amino_acid'):
                 target_base_ref = 'wrong_reference_amino_acid'
             elif variant.endswith('non_existent_input_rsID'):
@@ -430,6 +436,8 @@ def design_bes(annotation_file,
                                                                 'mutation_not_amino_acid',
                                                                 'input_position_not_numeric',
                                                                 'putative_intron_spanning_codon',
+                                                                'no_suitable_snv_found',
+                                                                'no_suitable_mutation_found',
                                                                 'wrong_reference_amino_acid',
                                                                 'non_existent_input_rsID',
                                                                 'genomic_position_not_numeric',
@@ -445,6 +453,8 @@ def design_bes(annotation_file,
                 variant.endswith('mutation_not_amino_acid') or
                 variant.endswith('input_position_not_numeric') or
                 variant.endswith('putative_intron_spanning_codon') or
+                variant.endswith('no_suitable_snv_found') or
+                variant.endswith('no_suitable_mutation_found') or
                 variant.endswith('wrong_reference_amino_acid') or
                 variant.endswith('non_existent_input_rsID') or
                 variant.endswith('genomic_position_not_numeric') or
@@ -464,6 +474,8 @@ def design_bes(annotation_file,
                                                     'mutation_not_amino_acid',
                                                     'input_position_not_numeric',
                                                     'putative_intron_spanning_codon',
+                                                    'no_suitable_snv_found',
+                                                    'no_suitable_mutation_found',
                                                     'wrong_reference_amino_acid',
                                                     'non_existent_input_rsID',
                                                     'genomic_position_not_numeric',
@@ -1256,6 +1268,8 @@ def design_bes(annotation_file,
                                                                         'mutation_not_amino_acid',
                                                                         'input_position_not_numeric',
                                                                         'putative_intron_spanning_codon',
+                                                                        'no_suitable_snv_found',
+                                                                        'no_suitable_mutation_found',
                                                                         'wrong_reference_amino_acid',
                                                                         'non_existent_input_rsID',
                                                                         'genomic_position_not_numeric',
@@ -1272,6 +1286,8 @@ def design_bes(annotation_file,
                                                                      'mutation_not_amino_acid',
                                                                      'input_position_not_numeric',
                                                                      'putative_intron_spanning_codon',
+                                                                     'no_suitable_snv_found',
+                                                                     'no_suitable_mutation_found',
                                                                      'wrong_reference_amino_acid',
                                                                      'non_existent_input_rsID',
                                                                      'genomic_position_not_numeric',
