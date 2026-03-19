@@ -79,6 +79,7 @@ def get_variant_from_protein(transcript,
     alt_codons = [k for k,v in codon_sun_one_letter.items() if v == aa_mut]
 
     exon_found = False
+    intron_spanning = False
 
     if aaseq[position_mut-1] == aa_ref: # check, reference aa is in transcript; cds and aaseq only necessary for this; simplify?
         start_cds = (position_mut-1) * 3 # transform bases to aa
@@ -94,18 +95,42 @@ def get_variant_from_protein(transcript,
                 exon_found = True
                 break
 
-        if exon_found == False:
+            elif any(base_pos in set(exon_range) for base_pos in range(start_cds, end_cds)):
+                intron_spanning = True
+                if not any(base_pos in set(exon_ranges[index + 1]) for base_pos in range(start_cds, end_cds)):
+                    return ['putative_exon_spanning_codon'] # failsafe; could this happen?
+                else:
+                    indices_found = [index if base_pos in set(exon_range) else index + 1 for base_pos in range(start_cds, end_cds)]
+                    exon_ranges_found = [exon_range if base_pos in set(exon_range) else exon_ranges[index + 1] for base_pos in range(start_cds, end_cds)]
+                    exon_found = True
+                    break
+
+        if exon_found == False: # keep as failsafe; should not happen anymore
             return ['putative_intron_spanning_codon']
 
-        if strands[index_found] == '+':
-            genome_start = genome_ranges[index_found][0] + (start_cds-exon_range_found[0])
-            genome_end = genome_ranges[index_found][0] + (end_cds-exon_range_found[0])
-            codon_genome = str(bescreen_ref_genome[chromosomes[index_found]][genome_start:genome_end])
+        if not intron_spanning:
+            if strands[index_found] == '+':
+                genome_start = genome_ranges[index_found][0] + (start_cds-exon_range_found[0])
+                genome_end = genome_ranges[index_found][0] + (end_cds-exon_range_found[0])
+                codon_genome = str(bescreen_ref_genome[chromosomes[index_found]][genome_start:genome_end])
 
-        elif strands[index_found] == '-':
-            genome_start = (genome_ranges[index_found][-1]+1) - (end_cds-exon_range_found[0])
-            genome_end = (genome_ranges[index_found][-1]+1) - (start_cds-exon_range_found[0])
-            codon_genome = shared.revcom(str(bescreen_ref_genome[chromosomes[index_found]][genome_start:genome_end]))
+            elif strands[index_found] == '-':
+                genome_start = (genome_ranges[index_found][-1]+1) - (end_cds-exon_range_found[0])
+                genome_end = (genome_ranges[index_found][-1]+1) - (start_cds-exon_range_found[0])
+                codon_genome = shared.revcom(str(bescreen_ref_genome[chromosomes[index_found]][genome_start:genome_end]))
+
+        elif intron_spanning: # better else:?
+            if strands[indices_found[0]] == '+': # should be the same for all indices
+                first_base = genome_ranges[indices_found[0]][0] + (range(start_cds, end_cds)[0]-exon_ranges_found[0][0])
+                second_base = genome_ranges[indices_found[1]][0] + (range(start_cds, end_cds)[1]-exon_ranges_found[1][0])
+                third_base = genome_ranges[indices_found[2]][0] + (range(start_cds, end_cds)[2]-exon_ranges_found[2][0])
+                codon_genome = f'{bescreen_ref_genome[chromosomes[indices_found[0]]][first_base]}{bescreen_ref_genome[chromosomes[indices_found[1]]][second_base]}{bescreen_ref_genome[chromosomes[indices_found[2]]][third_base]}'
+
+            elif strands[indices_found[0]] == '-': # should be the same for all indices
+                first_base = (genome_ranges[indices_found[2]][-1]) - (range(start_cds, end_cds)[2]-exon_ranges_found[2][0]) # why not genome_ranges[indices_found[2]][-1]+1 as above?
+                second_base = (genome_ranges[indices_found[1]][-1]) - (range(start_cds, end_cds)[1]-exon_ranges_found[1][0]) # why not genome_ranges[indices_found[1]][-1]+1 as above?
+                third_base = (genome_ranges[indices_found[0]][-1]) - (range(start_cds, end_cds)[0]-exon_ranges_found[0][0]) # why not genome_ranges[indices_found[0]][-1]+1 as above?
+                codon_genome = shared.revcom(f'{bescreen_ref_genome[chromosomes[indices_found[2]]][first_base]}{bescreen_ref_genome[chromosomes[indices_found[1]]][second_base]}{bescreen_ref_genome[chromosomes[indices_found[0]]][third_base]}')
 
         generated_variants = []
 
@@ -113,11 +138,26 @@ def get_variant_from_protein(transcript,
             edited_codon = []
 
             for index_base, base in enumerate(alt_codon):
-                if codon_genome[index_base] != base:
-                    if strands[index_found] == '+':
-                        edited_codon.append(f'{chromosomes[index_found]}_{genome_start+index_base+1}_{codon_genome[index_base]}_{base}')
-                    elif strands[index_found] == '-':
-                        edited_codon.append(f'{chromosomes[index_found]}_{genome_end-index_base}_{shared.revcom(codon_genome[index_base])}_{shared.revcom(base)}')
+                if not intron_spanning:
+                    if codon_genome[index_base] != base:
+                        if strands[index_found] == '+':
+                            edited_codon.append(f'{chromosomes[index_found]}_{genome_start+index_base+1}_{codon_genome[index_base]}_{base}')
+                        elif strands[index_found] == '-':
+                            edited_codon.append(f'{chromosomes[index_found]}_{genome_end-index_base}_{shared.revcom(codon_genome[index_base])}_{shared.revcom(base)}')
+                elif intron_spanning: # better else:?
+                    if codon_genome[index_base] != base:
+                        if strands[indices_found[0]] == '+': # should be the same for all indices
+                            index_found = indices_found[index_base]
+                            # base_to_use = first_base if index_base == 0 else second_base if index_base == 1 else third_base if index_base == 2 else ''
+                            # edited_codon.append(f'{chromosomes[index_found]}_{base_to_use+1}_{codon_genome[index_base]}_{base}')
+                            bases_to_use = [first_base, second_base, third_base]
+                            edited_codon.append(f'{chromosomes[index_found]}_{bases_to_use[index_base]+1}_{codon_genome[index_base]}_{base}')
+                        elif strands[indices_found[0]] == '-': # should be the same for all indices
+                            index_found = list(reversed(indices_found))[index_base]
+                            # base_to_use = first_base if index_base == 2 else second_base if index_base == 1 else third_base if index_base == 0 else ''
+                            # edited_codon.append(f'{chromosomes[index_found]}_{base_to_use+1}_{shared.revcom(codon_genome[index_base])}_{shared.revcom(base)}')
+                            bases_to_use = [third_base, second_base, first_base]
+                            edited_codon.append(f'{chromosomes[index_found]}_{bases_to_use[index_base]+1}_{shared.revcom(codon_genome[index_base])}_{shared.revcom(base)}')
 
 
             generated_variants.append(edited_codon)
