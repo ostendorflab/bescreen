@@ -143,7 +143,11 @@ def analyze_guide(guide,
 
 
 def revcom(string):
-    return string.replace('A', '*').replace('T', 'A').replace('*', 'T').replace('C', '&').replace('G', 'C').replace('&', 'G').replace('a', '*').replace('t', 'a').replace('*', 't').replace('c', '&').replace('g', 'c').replace('&', 'g')[::-1]
+    return string.replace('A', '*').replace('T', 'A').replace('*', 'T').replace('C', '&').replace('G', 'C').replace('&', 'G'
+                ).replace('a', '*').replace('t', 'a').replace('*', 't').replace('c', '&').replace('g', 'c').replace('&', 'g'
+                ).replace('U', 'A'
+                ).replace('M', '*').replace('K', 'M').replace('*', 'K').replace('R', '&').replace('Y', 'R').replace('&', 'Y'
+                ).replace('B', '*').replace('V', 'B').replace('*', 'V').replace('D', '&').replace('H', 'D').replace('&', 'H')[::-1]
 
 
 def gtf_to_parquet(gtf_path, parquet_path):
@@ -469,22 +473,22 @@ codon_sun_one_letter = {
 }
 
 iupac_nt_code = {
-    'A': ['A'],
-    'C': ['C'],
-    'G': ['G'],
-    'T': ['T'],
-    'U': ['T'],
-    'W': ['A', 'T'],
-    'S': ['C', 'G'],
-    'M': ['A', 'C'],
-    'K': ['G', 'T'],
-    'R': ['A', 'G'],
-    'Y': ['C', 'T'],
-    'B': ['C', 'G', 'T'],
-    'D': ['A', 'G', 'T'],
-    'H': ['A', 'C', 'T'],
-    'V': ['A', 'C', 'G'],
-    'N': ['A', 'C', 'G', 'T'],
+    'A': ['A'], # revcom = 'T'
+    'C': ['C'], # revcom = 'G'
+    'G': ['G'], # revcom = 'C'
+    'T': ['T'], # revcom = 'A'
+    'U': ['T'], # revcom = 'A'
+    'W': ['A', 'T'], # revcom = ['T', 'A'] = 'W'; no change needed
+    'S': ['C', 'G'], # revcom = ['G', 'C'] = 'S'; no change needed
+    'M': ['A', 'C'], # revcom = ['T', 'G'] = 'K'
+    'K': ['G', 'T'], # revcom = ['C', 'A'] = 'M'
+    'R': ['A', 'G'], # revcom = ['T', 'C'] = 'Y'
+    'Y': ['C', 'T'], # revcom = ['G', 'A'] = 'R'
+    'B': ['C', 'G', 'T'], # revcom = ['G', 'C', 'A'] = 'V'
+    'D': ['A', 'G', 'T'], # revcom = ['T', 'C', 'A'] = 'H'
+    'H': ['A', 'C', 'T'], # revcom = ['T', 'G', 'A'] = 'D'
+    'V': ['A', 'C', 'G'], # revcom = ['T', 'G', 'C'] = 'B'
+    'N': ['A', 'C', 'G', 'T'], # revcom = ['T', 'G', 'C', 'A'] = 'N'; no change needed
 }
 
 bes = {
